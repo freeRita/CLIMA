@@ -9,6 +9,7 @@ module MoistThermodynamics
 
 using DocStringExtensions
 
+using ..VariableTemplates
 using ..RootSolvers
 using ..PlanetParameters
 
@@ -44,7 +45,7 @@ export vapor_specific_humidity
 
 include("states.jl")
 
-@inline q_pt_0(::Type{FT}) where FT = PhasePartition{FT}(FT(0), FT(0), FT(0))
+@inline q_pt_0(::Type{FT}) where {FT<:Real} = PhasePartition{FT}(FT(0), FT(0), FT(0))
 
 """
     gas_constant_air([q::PhasePartition])
@@ -132,7 +133,7 @@ specific_volume(ts::ThermodynamicState) = 1/air_density(ts)
 Total specific humidity, given a thermodynamic state `ts`.
 """
 total_specific_humidity(ts::ThermodynamicState) = ts.q_tot
-total_specific_humidity(ts::PhaseDry{FT}) where FT = FT(0)
+total_specific_humidity(ts::PhaseDry{FT}) where {FT<:Real} = FT(0)
 total_specific_humidity(ts::PhaseNonEquil) = ts.q.tot
 
 """
@@ -220,6 +221,7 @@ and, optionally,
  - `q` [`PhasePartition`](@ref). Without this argument, the results are for dry air.
 """
 function air_temperature(e_int::FT, q::PhasePartition{FT}=q_pt_0(FT)) where {FT<:Real}
+  @show typeof.((q.tot, q.liq, q.ice, cv_m(q)))
   T_0 +
     (e_int - (q.tot - q.liq) * FT(e_int_v0) + q.ice * (FT(e_int_v0) + FT(e_int_i0))) /
     cv_m(q)
@@ -269,6 +271,7 @@ The internal energy per unit mass, given
   ρe_pot = ρ * e_pot
   ρe_int = ρe - ρe_kin - ρe_pot
   e_int = ρinv*ρe_int
+  println(typeof(e_int))
   return e_int
 end
 
