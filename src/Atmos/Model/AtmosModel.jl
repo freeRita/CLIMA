@@ -4,7 +4,7 @@ export AtmosModel,
        AtmosAcousticLinearModel, AtmosAcousticGravityLinearModel,
        RemainderModel
 
-using LinearAlgebra, StaticArrays, Unitful
+using LinearAlgebra, StaticArrays
 using ..VariableTemplates
 using ..MoistThermodynamics
 using ..PlanetParameters
@@ -53,9 +53,9 @@ end
 
 function vars_state(m::AtmosModel, FT)
   @vars begin
-    ρ::units(FT, u"kg*m^-3")
-    ρu::SVector{3, units(FT, u"kg/m^2/s")}
-    ρe::units(FT, u"kg*(m/s)^2 / m^3") # Energy per volume -> 'energy density'
+    ρ::FT
+    ρu::SVector{3,FT}
+    ρe::FT
     turbulence::vars_state(m.turbulence, FT)
     moisture::vars_state(m.moisture, FT)
     radiation::vars_state(m.radiation, FT)
@@ -63,8 +63,8 @@ function vars_state(m::AtmosModel, FT)
 end
 function vars_gradient(m::AtmosModel, FT)
   @vars begin
-    u::SVector{3, units(FT, u"m/s")}
-    h_tot::units(FT, u"kg*(m/s)^2")
+    u::SVector{3,FT}
+    h_tot::FT
     turbulence::vars_gradient(m.turbulence,FT)
     moisture::vars_gradient(m.moisture,FT)
   end
