@@ -8,7 +8,7 @@ using StaticArrays, LinearAlgebra
 using GPUifyLoops: @unroll
 using CLIMA.VariableTemplates
 import ..DGmethods: BalanceLaw, Grad, Vars, vars_state, vars_diffusive,
-                    vars_aux, vars_gradient, spatial_unit, mass_unit,
+                    vars_aux, vars_gradient, space_unit, mass_unit,
                     unit_scale, time_unit, value, boundary_state!,
                     wavespeed, flux_nondiffusive!, flux_diffusive!,
                     diffusive!, num_state, num_gradient, gradvariables!
