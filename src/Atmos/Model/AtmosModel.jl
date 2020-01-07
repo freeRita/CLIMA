@@ -8,6 +8,8 @@ using LinearAlgebra, StaticArrays
 using ..VariableTemplates
 using ..MoistThermodynamics
 using ..PlanetParameters
+using ..UnitAnnotations
+import ..UnitAnnotations: space_unit, time_unit, mass_unit, temperature_unit
 import ..MoistThermodynamics: internal_energy
 using ..SubgridScaleParameters
 using GPUifyLoops, Unitful
@@ -51,16 +53,11 @@ struct AtmosModel{O,RS,T,M,P,R,SU,S,BC,IS} <: BalanceLaw
   init_state::IS
 end
 
-space_unit(::AtmosModel) = u"m"
-time_unit(::AtmosModel) = u"s"
-mass_unit(::AtmosModel) = u"kg"
-temp_unit(::AtmosModel) = u"K"
-
 function vars_state(m::AtmosModel, FT)
   @vars begin
-    ρ::U(FT, u"kg*m^-3")
-    ρu::SVector{3, U(FT, u"kg/m^2/s")}
-    ρe::U(FT, u"J/m^3")
+    ρ::units(FT,:density)
+    ρu::SVector{3, units(FT,:massflux)}
+    ρe::units(FT,:energypv)
     turbulence::vars_state(m.turbulence, FT)
     moisture::vars_state(m.moisture, FT)
     radiation::vars_state(m.radiation, FT)
@@ -68,15 +65,15 @@ function vars_state(m::AtmosModel, FT)
 end
 function vars_gradient(m::AtmosModel, FT)
   @vars begin
-    u::SVector{3, U(FT, u"m/s")}
-    h_tot::U(FT, u"J/kg")
+    u::SVector{3, units(FT,:velocity)}
+    h_tot::units(FT,:gravpot)
     turbulence::vars_gradient(m.turbulence,FT)
     moisture::vars_gradient(m.moisture,FT)
   end
 end
 function vars_diffusive(m::AtmosModel, FT)
   @vars begin
-    ∇h_tot::SVector{3, units(FT, u"kg*m/s^2")}
+    ∇h_tot::SVector{3, units(FT,:force)}
     turbulence::vars_diffusive(m.turbulence,FT)
     moisture::vars_diffusive(m.moisture,FT)
   end
@@ -87,7 +84,7 @@ function vars_aux(m::AtmosModel, FT)
   @vars begin
     ∫dz::vars_integrals(m, FT)
     ∫dnz::vars_integrals(m, FT)
-    coord::SVector{3, U(FT, u"m")}
+    coord::SVector{3, units(FT,:space)}
     orientation::vars_aux(m.orientation, FT)
     ref_state::vars_aux(m.ref_state,FT)
     turbulence::vars_aux(m.turbulence,FT)

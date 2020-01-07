@@ -1,5 +1,6 @@
 using MPI
 using Unitful; using CLIMA.UnitAnnotations #FIXME
+import CLIMA.UnitAnnotations: space_unit, time_unit, mass_unit, temperature_unit
 using CLIMA
 using CLIMA.Mesh.Topologies
 using CLIMA.Mesh.Grids

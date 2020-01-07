@@ -37,8 +37,6 @@ vars_diffusive(lm::AtmosLinearModel, FT) = @vars()
 vars_aux(lm::AtmosLinearModel, FT) = vars_aux(lm.atmos,FT)
 vars_integrals(lm::AtmosLinearModel, FT) = @vars()
 
-space_unit(::AtmosLinearModel) = u"m"
-time_unit(::AtmosLinearModel) = u"s"
 
 function update_aux!(dg::DGModel, lm::AtmosLinearModel, Q::MPIStateArray, t::Real)
   return false

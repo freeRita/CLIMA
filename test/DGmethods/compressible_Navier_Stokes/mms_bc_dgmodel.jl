@@ -21,7 +21,6 @@ end
 include("mms_solution_generated.jl")
 include("mms_model.jl")
 
-
 # initial condition
 
 function run(mpicomm, ArrayType, dim, topl, warpfun, N, timeend, FT, dt)
@@ -158,4 +157,3 @@ let
 end
 
 nothing
-
