@@ -86,7 +86,7 @@ function atmos_boundary_state!(::CentralNumericalFluxDiffusive, bc::NoFluxBC,
   FT = eltype(stateM)
   stateP.ρ = stateM.ρ
   stateP.ρu -= 2 * dot(stateM.ρu, nM) * SVector(nM)
-  
+
   fill!(getfield(diffP, :array), FT(0))
 end
 
@@ -248,9 +248,9 @@ $(DocStringExtensions.FIELDS)
 """
 struct RayleighBenardBC{FT} <: BoundaryCondition
   "Prescribed bottom wall temperature [K]"
-  T_bot::FT
+  T_bot::U(FT,:temp)
   "Prescribed top wall temperature [K]"
-  T_top::FT
+  T_top::U(FT,:temp)
 end
 # Rayleigh-Benard problem with two fixed walls (prescribed temperatures)
 function atmos_boundary_state!(::Rusanov, bc::RayleighBenardBC, m::AtmosModel,
@@ -287,7 +287,7 @@ function atmos_boundary_state!(::CentralNumericalFluxDiffusive, bc::RayleighBena
       E_intP = ρP * cv_d * (bc.T_top - T_0)
     end
     stateP.ρe = (E_intP + ρP * auxP.coord[3] * grav)
-    diffP.∇h_tot = SVector(diffP.∇h_tot[1], diffP.∇h_tot[2], FT(0))
+    diffP.∇h_tot = SVector(diffP.∇h_tot[1], diffP.∇h_tot[2], FT(0)*u"kg*m/s^2") #FIXME
     nothing
   end
 end

@@ -1,5 +1,6 @@
 # Load Packages
 using MPI
+using Unitful; using CLIMA.UnitAnnotations #FIXME
 using CLIMA
 using CLIMA.Mesh.Topologies
 using CLIMA.Mesh.Grids
@@ -53,37 +54,37 @@ eprint = {https://doi.org/10.1175/1520-0469(1993)050<1865:BCEWAS>2.0.CO;2},
 """
 function Initialise_Rising_Bubble!(state::Vars, aux::Vars, (x1,x2,x3), t)
   FT            = eltype(state)
-  R_gas::FT     = R_d
-  c_p::FT       = cp_d
-  c_v::FT       = cv_d
-  γ::FT         = c_p / c_v
-  p0::FT        = MSLP
+  R_gas         = FT(R_d)
+  c_p           = FT(cp_d)
+  c_v           = FT(cv_d)
+  γ             = c_p / c_v
+  p0            = FT(MSLP)
 
-  xc::FT        = 500
-  zc::FT        = 260
+  xc            = FT(500)*u"m"
+  zc            = FT(260)*u"m"
   r             = sqrt((x1 - xc)^2 + (x3 - zc)^2)
-  rc::FT        = 250
-  θ_ref::FT     = 303
-  Δθ::FT        = 0
+  rc            = FT(250)*u"m"
+  θ_ref         = FT(303)*u"K"
+  Δθ            = FT(0)*u"K"
 
   if r <= rc
-    Δθ          = FT(1//2)
+    Δθ          = FT(1//2)*u"K"
   end
   #Perturbed state:
   θ            = θ_ref + Δθ # potential temperature
-  π_exner      = FT(1) - grav / (c_p * θ) * x3 # exner pressure
+  π_exner      = FT(1) - FT(grav) / (c_p * θ) * x3 # exner pressure
   ρ            = p0 / (R_gas * θ) * (π_exner)^ (c_v / R_gas) # density
   P            = p0 * (R_gas * (ρ * θ) / p0) ^(c_p/c_v) # pressure (absolute)
   T            = P / (ρ * R_gas) # temperature
-  ρu           = SVector(FT(0),FT(0),FT(0))
+  ρu           = SVector(FT(0),FT(0),FT(0)) .* u"kg/m^2/s"
   # energy definitions
-  e_kin        = FT(0)
-  e_pot        = grav * x3
+  e_kin        = FT(0) * u"m^2/s^2"
+  e_pot        = FT(grav) * x3
   ρe_tot       = ρ * total_energy(e_kin, e_pot, T)
   state.ρ      = ρ
   state.ρu     = ρu
   state.ρe     = ρe_tot
-  state.moisture.ρq_tot = FT(0)
+  state.moisture.ρq_tot = FT(0) * u"kg/m^3"
 end
 # --------------- Driver definition ------------------ #
 function run(mpicomm, ArrayType,

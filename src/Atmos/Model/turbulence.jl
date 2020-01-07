@@ -2,9 +2,15 @@
 using DocStringExtensions
 using CLIMA.PlanetParameters
 using CLIMA.SubgridScaleParameters
+import CLIMA.DGmethods: space_unit, time_unit, mass_unit, temp_unit
 export ConstantViscosityWithDivergence, SmagorinskyLilly, Vreman, AnisoMinDiss
 
 abstract type TurbulenceClosure end
+
+space_unit(m::TurbulenceClosure) = u"m"
+time_unit(m::TurbulenceClosure) = u"s"
+mass_unit(m::TurbulenceClosure) = u"kg"
+temp_unit(m::TurbulenceClosure) = u"K"
 
 vars_state(::TurbulenceClosure, FT) = @vars()
 vars_aux(::TurbulenceClosure, FT) = @vars()
@@ -77,6 +83,7 @@ function strain_rate_magnitude(S::SHermitianCompact{3,FT,6}) where {FT}
   return sqrt(2*norm2(S))
 end
 
+DVQ{FT} = Quantity{FT, dimension(u"kg/m/s"), typeof(u"kg/m/s")}
 """
     ConstantViscosityWithDivergence <: TurbulenceClosure
 
@@ -89,7 +96,7 @@ $(DocStringExtensions.FIELDS)
 """
 struct ConstantViscosityWithDivergence{FT} <: TurbulenceClosure
   "Dynamic Viscosity [kg/m/s]"
-  ρν::FT
+  ρν::DVQ{FT}
 end
 
 vars_gradient(::ConstantViscosityWithDivergence,FT) = @vars()
@@ -160,7 +167,7 @@ struct SmagorinskyLilly{FT} <: TurbulenceClosure
 end
 
 vars_aux(::SmagorinskyLilly,FT) = @vars(Δ::FT)
-vars_gradient(::SmagorinskyLilly,FT) = @vars(θ_v::FT)
+vars_gradient(::SmagorinskyLilly,FT) = @vars(θ_v::U(FT, u"K"))
 vars_diffusive(::SmagorinskyLilly,FT) = @vars(S::SHermitianCompact{3,FT,6}, N²::FT)
 
 
@@ -228,9 +235,11 @@ struct Vreman{FT} <: TurbulenceClosure
   "Smagorinsky Coefficient [dimensionless]"
   C_smag::FT
 end
-vars_aux(::Vreman,FT) = @vars(Δ::FT)
-vars_gradient(::Vreman,FT) = @vars(θ_v::FT)
-vars_diffusive(::Vreman,FT) = @vars(∇u::SMatrix{3,3,FT,9}, N²::FT)
+vars_aux(::Vreman,FT) = @vars(Δ::U(FT, u"m"))
+vars_gradient(::Vreman,FT) = @vars(θ_v::U(FT, u"K"))
+vars_diffusive(::Vreman,FT) = @vars(∇u::SMatrix{3,3,U(FT, u"s^-1"),9}, N²::FT)
+space_unit(::Vreman) = u"m"
+time_unit(::Vreman) = u"s"
 
 function atmos_init_aux!(::Vreman, ::AtmosModel, aux::Vars, geom::LocalGeometry)
   aux.turbulence.Δ = lengthscale(geom)
@@ -305,9 +314,9 @@ url = {https://link.aps.org/doi/10.1103/PhysRevFluids.1.041701}
 struct AnisoMinDiss{FT} <: TurbulenceClosure
   C_poincare::FT
 end
-vars_aux(::AnisoMinDiss,FT) = @vars(Δ::FT)
+vars_aux(::AnisoMinDiss,FT) = @vars(Δ::U(FT, u"m"))
 vars_gradient(::AnisoMinDiss,FT) = @vars()
-vars_diffusive(::AnisoMinDiss,FT) = @vars(∇u::SMatrix{3,3,FT,9})
+vars_diffusive(::AnisoMinDiss,FT) = @vars(∇u::SMatrix{3,3,U(FT, u"s^-1"),9})
 
 function atmos_init_aux!(::AnisoMinDiss, ::AtmosModel, aux::Vars, geom::LocalGeometry)
   aux.turbulence.Δ = lengthscale(geom)

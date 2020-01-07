@@ -10,7 +10,7 @@ using ..MoistThermodynamics
 using ..PlanetParameters
 import ..MoistThermodynamics: internal_energy
 using ..SubgridScaleParameters
-using GPUifyLoops
+using GPUifyLoops, Unitful
 using ..MPIStateArrays: MPIStateArray
 
 import CLIMA.DGmethods: BalanceLaw, vars_aux, vars_state, vars_gradient,
@@ -51,11 +51,16 @@ struct AtmosModel{O,RS,T,M,P,R,SU,S,BC,IS} <: BalanceLaw
   init_state::IS
 end
 
+space_unit(::AtmosModel) = u"m"
+time_unit(::AtmosModel) = u"s"
+mass_unit(::AtmosModel) = u"kg"
+temp_unit(::AtmosModel) = u"K"
+
 function vars_state(m::AtmosModel, FT)
   @vars begin
-    ρ::FT
-    ρu::SVector{3,FT}
-    ρe::FT
+    ρ::U(FT, u"kg*m^-3")
+    ρu::SVector{3, U(FT, u"kg/m^2/s")}
+    ρe::U(FT, u"J/m^3")
     turbulence::vars_state(m.turbulence, FT)
     moisture::vars_state(m.moisture, FT)
     radiation::vars_state(m.radiation, FT)
@@ -63,8 +68,8 @@ function vars_state(m::AtmosModel, FT)
 end
 function vars_gradient(m::AtmosModel, FT)
   @vars begin
-    u::SVector{3,FT}
-    h_tot::FT
+    u::SVector{3, U(FT, u"m/s")}
+    h_tot::U(FT, u"J/kg")
     turbulence::vars_gradient(m.turbulence,FT)
     moisture::vars_gradient(m.moisture,FT)
   end
@@ -82,7 +87,7 @@ function vars_aux(m::AtmosModel, FT)
   @vars begin
     ∫dz::vars_integrals(m, FT)
     ∫dnz::vars_integrals(m, FT)
-    coord::SVector{3,FT}
+    coord::SVector{3, U(FT, u"m")}
     orientation::vars_aux(m.orientation, FT)
     ref_state::vars_aux(m.ref_state,FT)
     turbulence::vars_aux(m.turbulence,FT)
