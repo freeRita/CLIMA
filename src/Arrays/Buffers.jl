@@ -1,6 +1,8 @@
 module Buffers
 
 using Requires
+using MPI
+using CUDAapi
 
 export Buffer
 export SingleBuffer, DoubleBuffer
@@ -89,12 +91,23 @@ function get_transfer(buf::Buffer)
   end
 end
 
+###
+# By design we intend to run async copies on the default stream
+# to obtain concurrency computation should run on a non-blocking
+# secondary stream. This is due to the fact that CUDA-aware MPI
+# will run operations on the default stream and those operations
+# are implicitly synchronising.
+#
+# In a double buffering scenario we want the memcpy to be asynchronous
+# with respect to other streams, but we need to synchronize the default
+# stream before the ISend
+###
+
 function prepare_transfer!(buf::Buffer)
   if buf.transfer === nothing
     # nothing to do here
   else
-    # XXX: async
-    copy!(buf.transfer, buf.stage)
+    copybuffer!(buf.transfer, buf.stage, async=false)
   end
 end
 
@@ -102,8 +115,7 @@ function prepare_stage!(buf::Buffer)
   if buf.transfer === nothing
     # nothing to do here
   else
-    # XXX: async
-    copy!(buf.stage, buf.transfer)
+    copybuffer!(buf.stage, buf.transfer, async=true)
   end
 end
 
@@ -113,10 +125,23 @@ end
 register(x) = nothing
 unregister(x) = nothing
 
+"""
+  copybuffer(A, B; async=true)
+
+Copy a buffer from device to host or vice-versa. Internally this uses
+`cudaMemcpyAsync` on the `CuDefaultStream`. The keyword argument 
+`async` determines whether it is asynchronous with regard to the host.
+"""
+function copybuffer!(A::AbstractArray, B::AbstractArray; async=true)
+  copy!(A, B)
+end
+
 
 @init @require CUDAdrv = "c5f51814-7f29-56b8-a69c-e4d8f6be1fde" begin
-  using .CUDAdrv
-  import .CUDAdrv.Mem
+  using CUDAdrv
+  using CuArrays
+
+  import CUDAdrv.Mem
 
   function register(arr)
     if sizeof(arr) == 0
@@ -124,6 +149,7 @@ unregister(x) = nothing
       return arr
     end
     GC.@preserve arr begin
+      # XXX: is Mem.HOSTREGISTER_DEVICEMAP necessary?
       Mem.register(Mem.HostBuffer, pointer(arr), sizeof(arr), Mem.HOSTREGISTER_DEVICEMAP)
     end
   end
@@ -139,6 +165,68 @@ unregister(x) = nothing
       Mem.unregister(buf)
     end
   end
+
+
+  # CUDAdrv.jl throws on CUDA_ERROR_NOT_READY
+  function queryStream(hStream)
+      err = CUDAapi.@runtime_ccall((:cuStreamQuery, CUDAdrv.libcuda), CUDAdrv.CUresult,
+                          (CUDAdrv.CUstream,),
+                          hStream)
+
+      if err === CUDAdrv.CUDA_ERROR_NOT_READY
+          return false
+      elseif err === CUDAdrv.CUDA_SUCCESS
+          return true
+      else
+          CUDAdrv.throw_api_error(err)
+      end
+  end
+
+  """
+      friendlysynchronize(stream)
+
+  MPI defines a notion of progress which means that MPI operations
+  need the program to call MPI functions (potentially multiple times)
+  to make progress and eventually complete. In some implementations,
+  progress on one rank may need MPI to be called on another rank.
+
+  As a result blocking by for example calling cudaStreamSynchronize,
+  may create a deadlock in some cases because not calling MPI will
+  not make other ranks progress.
+  """
+  function friendlysynchronize(stream)
+    status = false
+    while !status
+      status = queryStream(stream)
+      MPI.Iprobe(MPI.MPI_ANY_SOURCE, MPI.MPI_ANY_TAG, MPI.COMM_WORLD)
+    end
+    return
+  end
+
+  function async_copy!(A, B, N, stream)
+    GC.@preserve A B begin
+      ptrA = pointer(A)
+      ptrB = pointer(B)
+      unsafe_copyto!(ptrA, ptrB, N, async=true, stream=stream)
+    end
+  end
+  function copybuffer!(A::Array, B::CuArray; async=true)
+    @assert sizeof(A) == sizeof(B)
+    stream = CuDefaultStream()
+    async_copy!(A, B.buf, sizeof(A), stream)
+    if !async
+      friendlysynchronize(stream)
+    end
+  end
+  function copybuffer!(A::CuArray, B::Array; async=true)
+    @assert sizeof(A) == sizeof(B)
+    stream = CuDefaultStream()
+    async_copy!(A.buf, B, sizeof(A), stream)
+    if !async
+      friendlysynchronize(stream)
+    end
+  end
 end
 
 end #module
+
