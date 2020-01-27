@@ -72,7 +72,7 @@ may be needed).
 
 $(DocStringExtensions.FIELDS)
 """
-struct PhaseEquil{FT} <: ThermodynamicState{FT}
+@uaware struct PhaseEquil{FT} <: ThermodynamicState{FT}
   "internal energy"
   e_int::U(FT,:gravpot)
   "density of air (potentially moist)"

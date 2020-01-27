@@ -111,7 +111,7 @@ The (moist-)air density from the equation of state
 and, optionally,
  - `q` [`PhasePartition`](@ref). Without this argument, the results are for dry air.
 """
-air_density(T::U(FT,:temperature), p::U(FT,:pressure), q::PhasePartition{FT}=q_pt_0(FT)) where {FT<:Real} =
+@uaware air_density(T::U(FT,:temperature), p::U(FT,:pressure), q::PhasePartition{FT}=q_pt_0(FT)) where {FT<:Real} =
   p / (gas_constant_air(q) * T)
 
 """

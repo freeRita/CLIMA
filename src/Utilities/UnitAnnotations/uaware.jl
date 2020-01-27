@@ -1,12 +1,23 @@
-using Cassette
+using MacroTools
 
-export UnitCtx
+abstract type AbstractUnitCtx end
+struct DriverUnitCtx end
 
-Cassette.@Context UnitCtx
+# Drivers will specialise urule(::DriverUnitCtx)
+@inline function urule(::AbstractUnitCtx) = false
 
-macro uaware(expr)
-  # Evaluate both modified and unmodified input, but don't return any exprs
-  Base.eval(__module__, expr)
-  Base.eval(__module__, :(Cassette.@overdub(UnitCtx(), $expr)))
-  nothing
+"""
+  Apply global unit annotation rule, supplied by evaluating the method
+  `urule(::DriverUnitCtx)`.
+
+  This macro is most useful when defining structures or methods that are unit aware, however
+  may still be invoked on drivers which do not support units.
+"""
+macro uaware(ex)
+  uaware(DriverUnitCtx(), ex)
+end
+
+macro uaware(Ctx::AbstractUnitCtx, ex)
+  # TODO: define a traversal rule. Will return the resultant expression
+  postwalk()
 end
