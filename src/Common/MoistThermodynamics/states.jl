@@ -72,7 +72,7 @@ may be needed).
 
 $(DocStringExtensions.FIELDS)
 """
-struct PhaseEquil{FT} <: ThermodynamicState{FT}
+@uaware struct PhaseEquil{FT} <: ThermodynamicState{FT}
   "internal energy"
   e_int::U(FT,:gravpot)
   "density of air (potentially moist)"
@@ -110,7 +110,7 @@ A dry thermodynamic state (`q_tot = 0`).
 
 $(DocStringExtensions.FIELDS)
 """
-struct PhaseDry{FT} <: ThermodynamicState{FT}
+@uaware struct PhaseDry{FT} <: ThermodynamicState{FT}
   "internal energy"
   e_int::U(FT,:energy)
   "density of dry air"
@@ -195,7 +195,7 @@ be computed directly).
 $(DocStringExtensions.FIELDS)
 
 """
-struct PhaseNonEquil{FT} <: ThermodynamicState{FT}
+@uaware struct PhaseNonEquil{FT} <: ThermodynamicState{FT}
   "internal energy"
   e_int::U(FT,:energy)
   "density of air (potentially moist)"

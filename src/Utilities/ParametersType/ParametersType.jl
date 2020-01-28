@@ -1,5 +1,6 @@
 module ParametersType
-using Unitful; using CLIMA.UnitAnnotations #FIXME: ustrip, upreferred, unit, AbstractQuantity, Units
+using CLIMA.UnitAnnotations
+using Unitful
 import Unitful: AbstractQuantity, Units
 
 export @parameter, @exportparameter, ParametersType
@@ -70,6 +71,10 @@ macro parameter(sym, val, desc, doexport=false)
   ev = getval(@eval(__module__, $val))
 
   exportcmd = doexport ? :(export $sym) : ()
+
+  if !urule(DriverUnitCtx())
+    ev = ustrip(ev)
+  end
 
   quote
     $exportcmd

@@ -2,9 +2,10 @@ module UnitAnnotations
 
 export U, units, V, get_T, value, unit_scale,
        space_unit, mass_unit, time_unit, temperature_unit,
-       unit_alias
-
-using StaticArrays, Unitful; using CLIMA.UnitAnnotations #FIXME
+       unit_alias, @uaware
+       
+using CLIMA.UnitAnnotations
+using StaticArrays, Unitful
 import Unitful: AbstractQuantity
 
 include("aliases.jl")
