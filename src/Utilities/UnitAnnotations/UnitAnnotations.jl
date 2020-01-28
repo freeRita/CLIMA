@@ -8,7 +8,6 @@ using StaticArrays, Unitful; using CLIMA.UnitAnnotations #FIXME
 import Unitful: AbstractQuantity
 
 include("aliases.jl")
-include("uaware.jl")
 
 """
 Quantity or other scalar type with numeric backing type FT.
@@ -42,6 +41,8 @@ Returns the type variable for the choice of numeric backing type `FT` and prefer
 units(FT, u::Unitful.Units) = Quantity{FT, dimension(u), typeof(upreferred(u))}
 
 U(FT, u)        = Union{FT, units(FT, u)}
+# FIXME
+include("uaware.jl")
 
 """
     unit_scale(::Type{NamedTuple{S, T}} where {S, T<:Tuple}, factor)
