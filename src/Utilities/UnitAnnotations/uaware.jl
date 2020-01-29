@@ -8,6 +8,8 @@ struct DriverUnitCtx <: AbstractUnitCtx end
 
 # Drivers will specialise urule(::DriverUnitCtx)
 urule(::AbstractUnitCtx) = false
+# Enable unit types in structures
+urule(::DriverUnitCtx) = true
 
 function substitution(Ctx, ex)
   if @capture(ex, f_Symbol_U(p1_,p2_))
@@ -20,6 +22,7 @@ macro uaware(Ctx::AbstractUnitCtx, ex)
   Ctx = DriverUnitCtx()
   @capture(ex, struct _ __ end) || error("uaware only supports structures.")
   p = postwalk(x -> substitution(Ctx, x) , ex)
+  @show prettify(p), urule(Ctx)
   esc(p)
 end
 
