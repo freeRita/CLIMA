@@ -711,14 +711,14 @@ end
 
 Minimum interval for saturation adjustment using Secant method
 """
-@inline ΔT_min(::Type{FT}) where FT = FT(3) * temperature_unit(Val(:mt))
+@inline ΔT_min(::Type{FT}) where FT = FT(3) * unit_alias(:temperature)
 
 """
     ΔT_max(::Type{FT})
 
 Maximum interval for saturation adjustment using Secant method
 """
-@inline ΔT_max(::Type{FT}) where FT = FT(10) * temperature_unit(Val(:mt))
+@inline ΔT_max(::Type{FT}) where FT = FT(10) * unit_alias(:temperature)
 
 """
     bound_upper_temperature(T_1::FT, T_2::FT) where {FT<:Real}

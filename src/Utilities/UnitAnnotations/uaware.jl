@@ -9,9 +9,6 @@ struct DriverUnitCtx <: AbstractUnitCtx end
 # Drivers will specialise urule(::DriverUnitCtx)
 urule(::AbstractUnitCtx) = false
 
-#FIXME: remove me
-urule(::DriverUnitCtx) = true
-
 function substitution(Ctx, ex)
   if @capture(ex, f_Symbol_U(p1_,p2_))
     return urule(Ctx) ? :(units($p1,$p2)) : p1
@@ -38,7 +35,7 @@ macro uaware(ex)
   esc(macroexpand(__module__, :(UnitAnnotations.@uaware($Ctx, $ex))))
 end
 
-# Quick test 
+# Quick test
 # @uaware struct Foo{FT}
 #   x::U(FT,:massflux)
 # end
