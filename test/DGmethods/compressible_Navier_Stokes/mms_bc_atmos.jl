@@ -125,7 +125,7 @@ function run(mpicomm, ArrayType, dim, topl, warpfun, N, timeend, FT, dt)
   else
     model = AtmosModel(NoOrientation(),
                        NoReferenceState(),
-                       ConstantViscosityWithDivergence(U(FT, u"kg/m/s")(μ_exact)),
+                       ConstantViscosityWithDivergence(units(FT, u"kg/m/s")(μ_exact)),
                        MMSDryModel(),
                        NoPrecipitation(),
                        NoRadiation(),
