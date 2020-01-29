@@ -13,7 +13,7 @@ urule(::DriverUnitCtx) = true
 
 function substitution(Ctx, ex)
   if @capture(ex, f_Symbol_U(p1_,p2_))
-    return urule(Ctx) ? :(units($p1,$p2)) : p1
+    return :(urule($Ctx) ? units($p1,$p2) : $p1)
   end
   ex
 end
