@@ -35,6 +35,11 @@ using CLIMA.Atmos: vars_aux
 
 function run1(mpicomm, ArrayType, dim, topl, N, timeend, FT, dt)
 
+space_unit(::AtmosModel) = u"m"
+time_unit(::AtmosModel) = u"s"
+mass_unit(::AtmosModel) = u"kg"
+temperature_unit(::AtmosModel) = u"K"
+
   grid = DiscontinuousSpectralElementGrid(topl,
                                           FloatType = FT,
                                           DeviceArray = ArrayType,

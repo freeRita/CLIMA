@@ -14,6 +14,9 @@ import CLIMA.UnitAnnotations: space_unit, time_unit
 struct MMSModel{dim} <: BalanceLaw
 end
 
+# Enable unit types in structures
+urule(::DriverUnitCtx) = true
+
 space_unit(m::MMSModel) = u"m"
 time_unit(m::MMSModel) = u"s"
 

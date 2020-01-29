@@ -39,6 +39,8 @@ const polynomialorder   = 4
 const dt                = 0.01
 const timeend           = 10dt
 
+# Enable unit types in structures
+urule(::DriverUnitCtx) = true
 
 # Default units to use in differentiations
 space_unit(::AtmosModel) = u"m"

@@ -30,15 +30,13 @@ include("mms_solution_generated.jl")
 using CLIMA.Atmos
 import CLIMA.Atmos: MoistureModel, temperature, pressure, soundspeed, total_specific_enthalpy
 
+# Enable unit types in structures
+urule(::DriverUnitCtx) = true
+
 space_unit(::AtmosModel) = u"m"
 time_unit(::AtmosModel) = u"s"
 mass_unit(::AtmosModel) = u"kg"
 temperature_unit(::AtmosModel) = u"K"
-
-space_unit(::Val{:mt})  = u"m"
-time_unit(::Val{:mt})   = u"s"
-mass_unit(::Val{:mt})   = u"kg"
-temperature_unit(::Val{:mt})   = u"K"
 
 """
     MMSDryModel

@@ -8,8 +8,6 @@ struct DriverUnitCtx <: AbstractUnitCtx end
 
 # Drivers will specialise urule(::DriverUnitCtx)
 urule(::AbstractUnitCtx) = false
-# Enable unit types in structures
-urule(::DriverUnitCtx) = true
 
 function substitution(Ctx, ex)
   if @capture(ex, f_Symbol_U(p1_,p2_))

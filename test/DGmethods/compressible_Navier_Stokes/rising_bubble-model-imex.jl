@@ -41,15 +41,13 @@ const dim       = 3
 const dt        = 0.1
 const timeend   = 10dt
 
+# Enable unit types in structures
+urule(::DriverUnitCtx) = true
+
 space_unit(::AtmosModel) = u"m"
 time_unit(::AtmosModel) = u"s"
 mass_unit(::AtmosModel) = u"kg"
 temperature_unit(::AtmosModel) = u"K"
-
-space_unit(::Val{:mt})  = u"m"
-time_unit(::Val{:mt})   = u"s"
-mass_unit(::Val{:mt})   = u"kg"
-temperature_unit(::Val{:mt})   = u"K"
 
 space_unit(::Atmos.AtmosLinearModel) = u"m"
 time_unit(::Atmos.AtmosLinearModel) = u"s"
