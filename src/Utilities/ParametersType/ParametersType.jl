@@ -1,5 +1,4 @@
 module ParametersType
-using CLIMA.UnitAnnotations
 using Unitful
 import Unitful: AbstractQuantity, Units
 

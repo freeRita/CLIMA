@@ -87,25 +87,28 @@ macro uaware(ex)
       Base.@__doc__ $constr_unitful
     end |> esc
 
-  elseif @capture(ex, (f_(params__) = body_) | (function f_(params__) body_ end))
+  elseif @capture(shortdef(ex), (f_(params__) = body_) | (f_(params__) where {Ts__} = body_))
+    if !@isdefined Ts
+      Ts = Any[]
+    end
     params_unitless, params_unitful = split_U(params)
-    planet_params = names(CLIMA.PlanetParameters) #FIXME
+    planet_params = names(PlanetParameters) #FIXME
 
     # Careful of the generation order here!
     body_unitless = postwalk(body) do x
-      (@capture(x, s_Symbol) && s in planet_params) || (return s)
-      Base.eval(CLIMA.PlanetParameters, s) |> getval |> ustrip
+      (@capture(x, s_Symbol) && s in planet_params) || (return x)
+      Base.eval(__module__, s) |> getval |> ustrip
     end
 
-    def_unitless = :($f($(params_unitless...)) = $body_unitless)
-    def_unitful  = :($f($(params_unitful... )) = $body_unitful)
+    def_unitless = :($f($(params_unitless...)) where {$(Ts...)} = $body_unitless)
+    def_unitful  = :($f($(params_unitful... )) where {$(Ts...)} = $body)
 
     q = quote
-      Base.@__doc__ $def_unitless
-                    $def_unitful
-    end |> esc
+                    $def_unitless
+      Base.@__doc__ $def_unitful
+    end
     @show prettify(q)
-    q
+    return esc(q)
   end
 
   error("Expected a structure or function definition for annotation.")
