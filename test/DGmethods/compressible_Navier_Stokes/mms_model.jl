@@ -1,4 +1,5 @@
-using Unitful; using CLIMA.UnitAnnotations #FIXME
+using Unitful
+using CLIMA.UnitAnnotations
 using CLIMA.VariableTemplates
 
 import CLIMA.DGmethods: BalanceLaw, vars_aux, vars_state, vars_gradient,

@@ -1,6 +1,9 @@
 ### Reference state
 using DocStringExtensions
-using Unitful; using CLIMA.UnitAnnotations #FIXME
+using Unitful
+
+using CLIMA.UnitAnnotations
+
 export NoReferenceState, HydrostaticState, IsothermalProfile, LinearTemperatureProfile
 
 """

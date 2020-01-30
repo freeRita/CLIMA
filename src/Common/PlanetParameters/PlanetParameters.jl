@@ -4,8 +4,9 @@
 Module containing physical constants and parameters characterizing the planet.
 """
 module PlanetParameters
-using Unitful; using CLIMA.UnitAnnotations #FIXME
+using Unitful
 import Unitful: Quantity
+using ..UnitAnnotations
 using ..ParametersType
 
 # Physical constants
