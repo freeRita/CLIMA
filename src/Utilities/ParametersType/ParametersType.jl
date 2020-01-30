@@ -72,10 +72,6 @@ macro parameter(sym, val, desc, doexport=false)
 
   exportcmd = doexport ? :(export $sym) : ()
 
-  if !urule(DriverUnitCtx())
-    ev = ustrip(ev)
-  end
-
   quote
     $exportcmd
     const $esym = Parameter{$qsym}()

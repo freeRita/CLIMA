@@ -10,13 +10,6 @@ export ThermodynamicState,
        LiquidIcePotTempSHumNonEquil,
        LiquidIcePotTempSHumNonEquil_given_pressure
 
-# FIXME: Units used in MoistThermodynamics
-space_unit  = u"m"
-time_unit   = u"s"
-mass_unit   = u"kg"
-temperature_unit   = u"K"
-energy_unit = upreferred(u"J")
-
 """
     PhasePartition
 
@@ -95,6 +88,14 @@ function PhaseEquil(e_int::U(FT,:gravpot),
   q_tot_safe = max(q_tot, FT(0))
   q_tot_safe = min(q_tot_safe, FT(1))
   return PhaseEquil{FT}(e_int, ρ, q_tot_safe, sat_adjust(e_int, ρ, q_tot_safe, tol, maxiter))
+end
+
+function PhaseEquil(e_int::U(FT,:gravpot),
+                    ρ::U(FT,:density),
+                    q_tot::FT,
+                    T::U(FT,:temperature)
+                    ) where {FT<:Real, F}
+  return PhaseEquil{FT}(e_int, ρ, q_tot, T)
 end
 
 """

@@ -13,7 +13,7 @@ using CLIMA.ODESolvers
 using CLIMA.GenericCallbacks
 using CLIMA.Atmos
 using CLIMA.UnitAnnotations
-import CLIMA.UnitAnnotations: space_unit, time_unit, mass_unit, temperature_unit, urule
+import CLIMA.UnitAnnotations: space_unit, time_unit, mass_unit, temperature_unit
 using CLIMA.VariableTemplates
 using CLIMA.MoistThermodynamics
 using CLIMA.PlanetParameters
@@ -39,9 +39,6 @@ const Ne                = (100,2,50)
 const polynomialorder   = 4
 const dt                = 0.01
 const timeend           = 10dt
-
-# Enable unit types in structures
-urule(::DriverUnitCtx) = true
 
 # Default units to use in differentiations
 space_unit(::AtmosModel) = u"m"

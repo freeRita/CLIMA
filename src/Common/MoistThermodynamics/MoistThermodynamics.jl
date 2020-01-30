@@ -8,8 +8,9 @@ saturation specific humidities.
 module MoistThermodynamics
 
 using DocStringExtensions
-using Unitful; using CLIMA.UnitAnnotations #FIXME
+using Unitful
 
+using ..UnitAnnotations
 using ..VariableTemplates
 using ..RootSolvers
 using ..PlanetParameters

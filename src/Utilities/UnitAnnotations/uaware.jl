@@ -1,16 +1,9 @@
 using MacroTools
 using MacroTools: postwalk, @capture, @expand, prettify
 
-function substitution(Ctx, ex)
-  if @capture(ex, f_Symbol_U(p1_,p2_))
-    return :(urule($Ctx) ? units($p1,$p2) : $p1)
-  end
-  ex
-end
-
 """
-  Apply global unit annotation rule, supplied by evaluating the method
-  `urule(::DriverUnitCtx)`.
+  Duplicate structure definitions, maintaining a common constructor, to enable optional
+  unit annotation.
 
   This macro is most useful when defining structures or methods that are unit aware, however
   may still be invoked on drivers which do not support units.
@@ -22,16 +15,19 @@ macro uaware(ex)
   attrs = filter(x->!(x isa String), attrs)
 
   # Rename the struct
-  local sig_unitless
-  local sig_unitful
-  local name
-  local union
-  local p1
+  local sig_unitless, sig_unitful, name, union, p1, p2
   if @capture(sig, name_{p1__} <: sname_{p2__})
     lname = Symbol(:L, name)
     uname = Symbol(:U, name)
     sig_unitless = :($lname{$(p1...)} <: $sname{$(p2...)})
     sig_unitful  = :($uname{$(p1...)} <: $sname{$(p2...)})
+    union = :($name{$(p1...)} = Union{$lname{$(p1...)}, $uname{$(p1...)}})
+  elseif @capture(sig, name_{p1__} <: sname_)
+    p2 = Any[]
+    lname = Symbol(:L, name)
+    uname = Symbol(:U, name)
+    sig_unitless = :($lname{$(p1...)} <: $sname)
+    sig_unitful  = :($uname{$(p1...)} <: $sname)
     union = :($name{$(p1...)} = Union{$lname{$(p1...)}, $uname{$(p1...)}})
   elseif @capture(sig, name_{p1__})
     lname = Symbol(:L, name)
@@ -40,11 +36,13 @@ macro uaware(ex)
     sig_unitful  = :($uname{$(p1...)})
     union = :($name{$(p1...)} = Union{$lname{$(p1...)}, $uname{$(p1...)}})
   elseif @capture(sig, name_)
-    sig_unitless = Symbol(:L, name)
-    sig_unitful  = Symbol(:U, name)
+    lname = Symbol(:L, name)
+    uname = Symbol(:U, name)
+    p1, p2 = Any[], Any[]
+    sig_unitless = lname
+    sig_unitful  = uname
     union = :($name = Union{$sig_unitless, $sig_unitful})
   end
-  @isdefined(p1) || (p1 = Any[])
   @assert sig_unitful !== sig_unitless
 
   # First just remove all units
@@ -73,27 +71,28 @@ macro uaware(ex)
     end
   end
 
+  params_unitless = filter(x->!(x isa String), attrs_unitless)
+  params_unitful  = filter(x->!(x isa String), attrs_unitful)
+
   # Lastly provide the constructors
   constr_unitless = quote
-    function (::typeof($name{$(p1...)}))($(attrs_unitless...)) where {$(p1...)}
+    function (::typeof($name{$(p1...)}))($(params_unitless...)) where {$(p1...)}
       $lname{$(p1...)}($(attrs_unitless...))
     end
   end
   constr_unitful = quote
-    function (::typeof($name{$(p1...)}))($(attrs_unitful... )) where {$(p1...)}
+    function (::typeof($name{$(p1...)}))($(params_unitful... )) where {$(p1...)}
       $uname{$(p1...)}($(attrs_unitful...))
     end
   end
 
-  q = quote
-    $unitless
-    $unitful
-    $union
-    $constr_unitless
-    $constr_unitful
-  end
-  @show prettify(q)
-  esc(q)
+  return quote
+    Base.@__doc__ $unitless
+    Base.@__doc__ $unitful
+    Base.@__doc__ $union
+    Base.@__doc__ $constr_unitless
+    Base.@__doc__ $constr_unitful
+  end |> esc
 end
 
 # Quick test

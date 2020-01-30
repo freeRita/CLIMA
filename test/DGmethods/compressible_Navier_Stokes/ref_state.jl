@@ -33,12 +33,13 @@ init_state!(state, aux, coords, t) = nothing
 # initial condition
 using CLIMA.Atmos: vars_aux
 
-function run1(mpicomm, ArrayType, dim, topl, N, timeend, FT, dt)
-
 space_unit(::AtmosModel) = u"m"
 time_unit(::AtmosModel) = u"s"
 mass_unit(::AtmosModel) = u"kg"
 temperature_unit(::AtmosModel) = u"K"
+
+function run1(mpicomm, ArrayType, dim, topl, N, timeend, FT, dt)
+
 
   grid = DiscontinuousSpectralElementGrid(topl,
                                           FloatType = FT,

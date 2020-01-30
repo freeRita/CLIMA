@@ -48,9 +48,6 @@ const T_lapse   = -0.01u"K"
 const T_top     = T_bot + T_lapse*zmax / u"m"
 const C_smag    = 0.18
 
-# Enable unit types in structures
-urule(::DriverUnitCtx) = true
-
 space_unit(::AtmosModel) = u"m"
 time_unit(::AtmosModel) = u"s"
 mass_unit(::AtmosModel) = u"kg"
