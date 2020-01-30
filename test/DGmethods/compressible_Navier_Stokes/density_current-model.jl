@@ -1,7 +1,6 @@
 
 # Load Packages
-using MPI, Unitful; using CLIMA.UnitAnnotations #FIXME
-import CLIMA.UnitAnnotations: space_unit, time_unit, mass_unit, temperature_unit
+using MPI, Unitful #FIXME
 using CLIMA
 using CLIMA.Mesh.Topologies
 using CLIMA.Mesh.Grids
@@ -13,6 +12,8 @@ using CLIMA.LowStorageRungeKuttaMethod
 using CLIMA.ODESolvers
 using CLIMA.GenericCallbacks
 using CLIMA.Atmos
+using CLIMA.UnitAnnotations
+import CLIMA.UnitAnnotations: space_unit, time_unit, mass_unit, temperature_unit, urule
 using CLIMA.VariableTemplates
 using CLIMA.MoistThermodynamics
 using CLIMA.PlanetParameters

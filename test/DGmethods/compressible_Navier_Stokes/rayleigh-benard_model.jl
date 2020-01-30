@@ -45,7 +45,7 @@ const dt        = 0.005
 const timeend   = 100
 const T_bot     = 299u"K"
 const T_lapse   = -0.01u"K"
-const T_top     = T_bot + T_lapse*zmax
+const T_top     = T_bot + T_lapse*zmax / u"m"
 const C_smag    = 0.18
 
 # Enable unit types in structures

@@ -246,7 +246,7 @@ end
 # Fields
 $(DocStringExtensions.FIELDS)
 """
-struct RayleighBenardBC{FT} <: BoundaryCondition
+@uaware struct RayleighBenardBC{FT} <: BoundaryCondition
   "Prescribed bottom wall temperature [K]"
   T_bot::U(FT,:temperature)
   "Prescribed top wall temperature [K]"
