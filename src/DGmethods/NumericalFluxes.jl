@@ -13,7 +13,6 @@ import ..DGmethods: BalanceLaw, Grad, Vars, vars_state, vars_diffusive,
                     diffusive!, num_state, num_gradient, gradvariables!
 
 using ..UnitAnnotations
-import ..UnitAnnotations: space_unit, time_unit
 
 """
     NumericalFluxGradient
@@ -44,8 +43,10 @@ function numerical_flux_gradient!(::CentralNumericalFluxGradient, bl::BalanceLaw
                                   state⁺::Vars{S}, aux⁺::Vars{A},
                                   t) where {D,T,S,A}
 
+  grad_types = unit_scale(T, inv(space_unit(bl)))
+
   G = n .* (parent(transform⁺) .+ parent(transform⁻))' ./ 2
-  diffusive!(bl, diff, Grad{T}(G), state⁻, aux⁻, t)
+  diffusive!(bl, diff, Grad{grad_types}(G), state⁻, aux⁻, t)
 end
 
 function numerical_boundary_flux_gradient!(nf::CentralNumericalFluxGradient,
@@ -154,6 +155,7 @@ struct CentralNumericalFluxNonDiffusive <: NumericalFluxNonDiffusive end
 function numerical_flux_nondiffusive!(::CentralNumericalFluxNonDiffusive,
     bl::BalanceLaw, fluxᵀn::Vars{S}, n::SVector,
     state⁻::Vars{S}, aux⁻::Vars{A}, state⁺::Vars{S}, aux⁺::Vars{A}, t) where {S,A}
+  grad_types = unit_scale(S, inv(space_unit(bl)))
 
   FT = eltype(fluxᵀn)
   nstate = num_state(bl,FT)
@@ -161,11 +163,11 @@ function numerical_flux_nondiffusive!(::CentralNumericalFluxNonDiffusive,
 
   F⁻ = similar(Fᵀn, Size(3, nstate))
   fill!(F⁻, -zero(FT))
-  flux_nondiffusive!(bl, Grad{S}(F⁻), state⁻, aux⁻, t)
+  flux_nondiffusive!(bl, Grad{grad_types}(F⁻), state⁻, aux⁻, t)
 
   F⁺ = similar(Fᵀn, Size(3, nstate))
   fill!(F⁺, -zero(FT))
-  flux_nondiffusive!(bl, Grad{S}(F⁺), state⁺, aux⁺, t)
+  flux_nondiffusive!(bl, Grad{grad_types}(F⁺), state⁺, aux⁺, t)
 
   Fᵀn .+= (F⁻ + F⁺)' * (n/2)
 end
@@ -228,17 +230,19 @@ function numerical_flux_diffusive!(::CentralNumericalFluxDiffusive,
   state⁻::Vars{S}, diff⁻::Vars{D}, aux⁻::Vars{A},
   state⁺::Vars{S}, diff⁺::Vars{D}, aux⁺::Vars{A}, t) where {S,D,A}
 
+  grad_types = unit_scale(S, inv(space_unit(bl)))
+
   FT = eltype(fluxᵀn)
   nstate = num_state(bl,FT)
   Fᵀn = parent(fluxᵀn)
 
   F⁻ = similar(Fᵀn, Size(3, nstate))
   fill!(F⁻, -zero(FT))
-  flux_diffusive!(bl, Grad{S}(F⁻), state⁻, diff⁻, aux⁻, t)
+  flux_diffusive!(bl, Grad{grad_types}(F⁻), state⁻, diff⁻, aux⁻, t)
 
   F⁺ = similar(Fᵀn, Size(3, nstate))
   fill!(F⁺, -zero(FT))
-  flux_diffusive!(bl, Grad{S}(F⁺), state⁺, diff⁺, aux⁺, t)
+  flux_diffusive!(bl, Grad{grad_types}(F⁺), state⁺, diff⁺, aux⁺, t)
 
   Fᵀn .+= (F⁻ + F⁺)' * (n⁻/2)
 end
@@ -250,19 +254,21 @@ function numerical_boundary_flux_diffusive!(nf::CentralNumericalFluxDiffusive,
     bctype, t,
     state1⁻::Vars{S}, diff1⁻::Vars{D}, aux1⁻::Vars{A}) where {S,D,A}
 
+  grad_types = unit_scale(S, inv(space_unit(bl)))
+
   FT = eltype(fluxᵀn)
   nstate = num_state(bl,FT)
   Fᵀn = parent(fluxᵀn)
 
   F⁻ = similar(Fᵀn, Size(3, nstate))
   fill!(F⁻, -zero(FT))
-  flux_diffusive!(bl, Grad{S}(F⁻), state⁻, diff⁻, aux⁻, t)
+  flux_diffusive!(bl, Grad{grad_types}(F⁻), state⁻, diff⁻, aux⁻, t)
 
   F⁺ = similar(Fᵀn, Size(3, nstate))
   fill!(F⁺, -zero(FT))
   boundary_flux_diffusive!(nf, bl,
-                           Grad{S}(F⁺), state⁺, diff⁺, aux⁺, n⁻,
-                           Grad{S}(F⁻), state⁻, diff⁻, aux⁻,
+                           Grad{grad_types}(F⁺), state⁺, diff⁺, aux⁺, n⁻,
+                           Grad{grad_types}(F⁻), state⁻, diff⁻, aux⁻,
                            bctype, t,
                            state1⁻, diff1⁻, aux1⁻)
 

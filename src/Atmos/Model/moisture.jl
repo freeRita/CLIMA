@@ -68,7 +68,7 @@ Base.@kwdef struct EquilMoist <: MoistureModel
 end
 vars_state(::EquilMoist,FT) = @vars(ρq_tot::units(FT,:density))
 vars_gradient(::EquilMoist,FT) = @vars(q_tot::FT, h_tot::units(FT,:gravpot))
-vars_diffusive(::EquilMoist,FT) = @vars(ρd_q_tot::SVector{3, units(FT,:massflux)}, ρd_h_tot::SVector{3,units(FT,:energypv)})
+vars_diffusive(::EquilMoist,FT) = @vars(∇q_tot::SVector{3, units(FT,u"m^-1")})
 vars_aux(::EquilMoist,FT) = @vars(temperature::units(FT,:temperature), θ_v::units(FT,:temperature), q_liq::FT)
 
 @inline function atmos_nodal_update_aux!(moist::EquilMoist, atmos::AtmosModel,

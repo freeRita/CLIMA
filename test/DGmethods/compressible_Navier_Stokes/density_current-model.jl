@@ -104,7 +104,7 @@ function Initialise_Density_Current!(state::Vars, aux::Vars, (x1,x2,x3), t)
   state.moisture.ρq_tot = 0.0u"kg/m^3"
 end
 # --------------- Driver definition ------------------ #
-function run(mpicomm,
+function run(mpicomm, ArrayType,
              topl, dim, Ne, polynomialorder,
              timeend, FT, dt)
   # -------------- Define grid ----------------------------------- #

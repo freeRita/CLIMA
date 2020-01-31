@@ -73,7 +73,7 @@ function vars_gradient(m::AtmosModel, FT)
 end
 function vars_diffusive(m::AtmosModel, FT)
   @vars begin
-    ∇h_tot::SVector{3, units(FT,:force)}
+    ∇h_tot::SVector{3, units(FT,:accel)}
     turbulence::vars_diffusive(m.turbulence,FT)
     moisture::vars_diffusive(m.moisture,FT)
   end
@@ -136,6 +136,7 @@ Where
   z  = altitude(m.orientation, aux)
 
   # advective terms
+  @show typeof.((z, m.subsidence))
   usub = subsidence_velocity(m.subsidence, z)
   ẑ = vertical_unit_vector(m.orientation, aux)
   u_tot = u .- usub * ẑ

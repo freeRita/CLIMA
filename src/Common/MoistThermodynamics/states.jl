@@ -90,13 +90,13 @@ function PhaseEquil(e_int::U(FT,:gravpot),
   return PhaseEquil{FT}(e_int, ρ, q_tot_safe, sat_adjust(e_int, ρ, q_tot_safe, tol, maxiter))
 end
 
-function PhaseEquil(e_int::U(FT,:gravpot),
-                    ρ::U(FT,:density),
-                    q_tot::FT,
-                    T::U(FT,:temperature)
-                    ) where {FT<:Real, F}
-  return PhaseEquil{FT}(e_int, ρ, q_tot, T)
-end
+# function PhaseEquil(e_int::U(FT,:gravpot),
+#                     ρ::U(FT,:density),
+#                     q_tot::FT,
+#                     T::U(FT,:temperature)
+#                     ) where {FT<:Real,F}
+#   return PhaseEquil{FT}(e_int, ρ, q_tot, T)
+# end
 
 """
     PhaseDry{FT} <: ThermodynamicState
@@ -131,7 +131,7 @@ Constructs a [`PhaseEquil`](@ref) thermodynamic state from:
 """
 function LiquidIcePotTempSHumEquil(θ_liq_ice::U(FT,:temperature),
                                    ρ::U(FT,:density),
-                                   q_tot::FT
+                                   q_tot::FT,
                                    maxiter::Int=30,
                                    tol::FT=FT(1e-1)
                                    ) where {FT<:Real}

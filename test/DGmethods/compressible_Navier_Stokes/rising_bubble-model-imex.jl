@@ -102,7 +102,7 @@ function Initialise_Rising_Bubble!(state::Vars, aux::Vars, (x1,x2,x3), t)
   state.moisture.ρq_tot = FT(0) * u"kg/m^3"
 end
 # --------------- Driver definition ------------------ #
-function run(mpicomm, LinearType,
+function run(mpicomm, ArrayType, LinearType,
              topl, dim, Ne, polynomialorder,
              timeend, FT, dt)
   # -------------- Define grid ----------------------------------- #

@@ -5,7 +5,7 @@ export U, units, V, get_T, value, unit_scale,
        unit_alias, @uaware
 
 using StaticArrays, Unitful
-import Unitful: AbstractQuantity
+import Unitful: AbstractQuantity, Units
 
 function U end
 
@@ -67,6 +67,11 @@ Scale the output of a @vars call by the provided units.
   end
   :(return $(NamedTuple{S, Tuple{p.(T.parameters, factor())...}}))
 end
+
+@inline Base.:(*)(V::Type{NamedTuple{S, T}}, factor::Units) where {S, T<:Tuple} =
+  (unit_scale(V, factor))
+@inline Base.:(/)(::Type{NamedTuple{S, T}}, factor::Units) where {S, T<:Tuple} =
+  (unit_scale(V, inv(factor)))
 
 """
 Remove unit annotations, return float in SI units.

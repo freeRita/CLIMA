@@ -81,7 +81,7 @@ function initialise_rayleigh_benard!(state::Vars, aux::Vars, coord, t)
   state.moisture.ρq_tot = 0.0u"kg/m^3"
 end
 # --------------- Driver definition ------------------ #
-function run(mpicomm,
+function run(mpicomm, ArrayType
              topl, dim, Ne, polynomialorder,
              timeend, FT, dt, model)
   # -------------- Define grid ----------------------------------- #

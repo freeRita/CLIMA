@@ -826,6 +826,7 @@ function faceviscterms!(bl::BalanceLaw, ::Val{dim}, ::Val{polyorder},
                         elemtobndy, elems) where {dim, polyorder, direction}
   N = polyorder
   FT = eltype(Q)
+  grad_types = unit_scale(vars_gradient(bl, FT), inv(space_unit(bl)))
   nstate = num_state(bl,FT)
   ngradstate = num_gradient(bl,FT)
   nviscstate = num_diffusive(bl,FT)
@@ -952,7 +953,7 @@ function faceviscterms!(bl::BalanceLaw, ::Val{dim}, ::Val{polyorder},
           end
         end
         diffusive!(bl, Vars{vars_diffusive(bl,FT)}(l_QMvisc),
-                   Grad{vars_gradient(bl,FT)}(l_nGM),
+                   Grad{grad_types}(l_nGM),
                    Vars{vars_state(bl,FT)}(l_QM),
                    Vars{vars_aux(bl,FT)}(l_auxM), t)
 
