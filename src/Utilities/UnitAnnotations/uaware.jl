@@ -80,11 +80,11 @@ macro uaware(ex)
     end
 
     return quote
-      Base.@__doc__ $unitless
+                    $unitless
       Base.@__doc__ $unitful
-      Base.@__doc__ $union
-      Base.@__doc__ $constr_unitless
-      Base.@__doc__ $constr_unitful
+                    $union
+                    $constr_unitless
+                    $constr_unitful
     end |> esc
 
   elseif @capture(shortdef(ex), (f_(params__) = body_) | (f_(params__) where {Ts__} = body_))
@@ -103,12 +103,10 @@ macro uaware(ex)
     def_unitless = :($f($(params_unitless...)) where {$(Ts...)} = $body_unitless)
     def_unitful  = :($f($(params_unitful... )) where {$(Ts...)} = $body)
 
-    q = quote
+    return quote
                     $def_unitless
       Base.@__doc__ $def_unitful
-    end
-    @show prettify(q)
-    return esc(q)
+    end |> esc
   end
 
   error("Expected a structure or function definition for annotation.")
@@ -120,7 +118,7 @@ end
 """
 function split_U(exprs)
   unitless(ex) = postwalk(ex) do x
-    @capture(x, _Symbol_U(FT_, usym_)) && (return :(units($FT, $usym)))
+    @capture(x, _Symbol_U(FT_, usym_)) && (return FT)
     x
   end
   unitful(ex)  = postwalk(ex) do x

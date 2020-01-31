@@ -46,7 +46,7 @@ const dt        = 0.005
 const timeend   = 100
 const T_bot     = 299u"K"
 const T_lapse   = -0.01u"K"
-const T_top     = T_bot + T_lapse*zmax / u"m"
+const T_top     = T_bot + T_lapse*zmax
 const C_smag    = 0.18
 
 space_unit(::AtmosModel) = u"m"
@@ -55,7 +55,8 @@ mass_unit(::AtmosModel) = u"kg"
 temperature_unit(::AtmosModel) = u"K"
 
 # ------------- Initial condition function ----------- #
-function initialise_rayleigh_benard!(state::Vars, aux::Vars, (x1,x2,x3), t)
+function initialise_rayleigh_benard!(state::Vars, aux::Vars, coord, t)
+  x1, x2, x3 = coord ./ u"m"
   FT            = eltype(state)
   mass_flux     = units(FT,:massflux)
   R_gas         = FT(R_d)
@@ -71,7 +72,7 @@ function initialise_rayleigh_benard!(state::Vars, aux::Vars, (x1,x2,x3), t)
   ρ             = P / (R_gas * T)
   ρu, ρv, ρw    = mass_flux(0), mass_flux(0) , ρ * δw
   E_int         = ρ * c_v * (T-T_0)
-  E_pot         = ρ * grav * x3
+  E_pot         = ρ * grav * (x3 * u"m")
   E_kin         = ρ * FT(1/2) * δw^2
   ρe_tot        = E_int + E_pot + E_kin
   state.ρ       = ρ
@@ -136,8 +137,10 @@ function run(mpicomm,
       step[1] += 1
       nothing
   end
+  println("About to start solve")
 
   solve!(Q, lsrk; timeend=timeend, callbacks=(cbinfo,cbvtk))
+  println("Solved")
   # End of the simulation information
   engf = norm(Q)
   Qe = init_ode_state(dg, FT(timeend))
@@ -170,6 +173,7 @@ let
     SGSmodels = (AnisoMinDiss{FT}(1), Vreman{FT}(C_smag), SmagorinskyLilly{FT}(C_smag))
     Expected = (FT(9.9859344959259033e-01),FT(1.0038942098617554e+00),FT(1.0027571916580200e+00))
     for ii=1:length(SGSmodels)
+      temp_type = units(FT,:temperature)
       model = AtmosModel(FlatOrientation(),
                          NoReferenceState(),
                          SGSmodels[ii],
@@ -178,7 +182,7 @@ let
                          NoRadiation(),
                          NoSubsidence{FT}(),
                          Gravity(),
-                         RayleighBenardBC{FT}(T_bot,T_top),
+                         RayleighBenardBC{FT}(temp_type(T_bot),temp_type(T_top)),
                          initialise_rayleigh_benard!)
       brickrange = (range(FT(xmin); length=Ne[1]+1, stop=xmax),
                     range(FT(ymin); length=Ne[2]+1, stop=ymax),
