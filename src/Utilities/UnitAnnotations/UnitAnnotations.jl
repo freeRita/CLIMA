@@ -1,6 +1,6 @@
 module UnitAnnotations
 
-export U, units, V, get_T, value, unit_scale,
+export U, units, V, get_T, value, unit_scale, get_unit,
        space_unit, mass_unit, time_unit, temperature_unit,
        unit_alias, @uaware
 

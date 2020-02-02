@@ -19,9 +19,11 @@ struct Parameter{sym} <: Base.AbstractIrrational end
 
 Base.show(io::IO, x::Parameter{S}) where {S} = print(io, "$(string(x))")
 
+Base.:(==)(x::Parameter, y::AbstractQuantity) = (getval(x) == y)
 Base.:(==)(x::Parameter, y::AbstractFloat) = (getval(x) == y)
 Base.:(==)(x::Parameter, y::Irrational) = (getval(x) == y)
 Base.:(==)(x::Parameter, y::Rational) = (getval(x) == y)
+Base.:(==)(x::AbstractQuantity, y::Parameter) = (x == getval(y))
 Base.:(==)(x::AbstractFloat, y::Parameter) = (x == getval(y))
 Base.:(==)(x::Irrational, y::Parameter) = (x == getval(y))
 Base.:(==)(x::Rational, y::Parameter) = (x == getval(y))
@@ -56,6 +58,7 @@ getval(x::Number) = x
 
 """
     @parameter sym val desc doexport=false
+    @parameter(sym, val, desc, doexport-false)
 
 Define a new `Parameter` value, `sym`, with value `val` and description string
 `desc`. If `doexport == true` then `sym` is exported, e.g., the command

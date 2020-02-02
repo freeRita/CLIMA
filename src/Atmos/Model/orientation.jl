@@ -3,6 +3,9 @@ import ..PlanetParameters: grav, planet_radius
 import ..UnitAnnotations: space_unit, gravpot_unit, accel_unit
 export Orientation, NoOrientation, FlatOrientation, SphericalOrientation
 
+# FIXME
+using Unitful: numtype
+
 abstract type Orientation
 end
 
@@ -16,7 +19,8 @@ end
 
 gravitational_potential(::Orientation, aux::Vars) = aux.orientation.Φ
 ∇gravitational_potential(::Orientation, aux::Vars) = aux.orientation.∇Φ
-altitude(orientation::Orientation, aux::Vars) = gravitational_potential(orientation, aux) / grav
+altitude(orientation::Orientation, aux::Vars) =
+  (gp = gravitational_potential(orientation, aux); gp / numtype(gp)(grav)) #FIXME
 vertical_unit_vector(orientation::Orientation, aux::Vars) = ∇gravitational_potential(orientation, aux) / grav
 
 
@@ -62,6 +66,6 @@ function atmos_init_aux!(::FlatOrientation, m::AtmosModel, aux::Vars, geom::Loca
   aux.orientation.Φ = grav * aux.coord[3]
   u_grad_pot = gravpot_unit(m) / space_unit(m)
   v = (0, 0, grav / accel_unit(m)).*u_grad_pot
-  # FIXME: This direct call to a constructor 
+  # FIXME: This direct call to a constructor
   aux.orientation.∇Φ = SVector{3, units(eltype(aux), u_grad_pot)}(v)
 end

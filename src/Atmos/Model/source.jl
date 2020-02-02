@@ -22,7 +22,7 @@ function atmos_source!(::Gravity, atmos::AtmosModel, source::Vars, state::Vars, 
   if atmos.ref_state isa HydrostaticState
     source.ρu -= (state.ρ - aux.ref_state.ρ) * aux.orientation.∇Φ * time_unit(atmos)
   else
-    source.ρu -= state.ρ * aux.orientation.∇Φ * time_unit(m)
+    source.ρu -= state.ρ * aux.orientation.∇Φ * time_unit(atmos)
   end
 end
 
