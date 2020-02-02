@@ -51,7 +51,7 @@ struct Buffer{T, Arr, Buff}
   stage :: Arr     # Same type as Q.data, used for staging
   transfer :: Buff # Union{Nothing,Buff}
 
-  function Buffer{T}(::Type{Arr}, kind, dims...; pinned = true) where {T, Arr}
+  function Buffer{T}(::Type{Arr}, kind, dims...; pinned = false) where {T, Arr}
     if kind == SingleBuffer
       transfer = nothing
     elseif kind == DoubleBuffer
