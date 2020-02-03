@@ -70,7 +70,7 @@ end
 
 @inline Base.:(*)(V::Type{NamedTuple{S, T}}, factor::Units) where {S, T<:Tuple} =
   (unit_scale(V, factor))
-@inline Base.:(/)(::Type{NamedTuple{S, T}}, factor::Units) where {S, T<:Tuple} =
+@inline Base.:(/)(V::Type{NamedTuple{S, T}}, factor::Units) where {S, T<:Tuple} =
   (unit_scale(V, inv(factor)))
 
 """

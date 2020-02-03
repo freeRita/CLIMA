@@ -88,7 +88,7 @@ macro uaware(ex)
     end |> esc
 
   elseif @capture(shortdef(ex), (f_(params__) = body_) | (f_(params__) where {Ts__} = body_))
-    if !@isdefined Ts
+    if !@isdefined(Ts) || Ts === nothing
       Ts = Any[]
     end
     params_unitless, params_unitful = split_U(params)

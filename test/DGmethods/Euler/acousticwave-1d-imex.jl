@@ -12,6 +12,7 @@ using CLIMA.ColumnwiseLUSolver: ManyColumnLU
 using CLIMA.VTK: writevtk, writepvtu
 using CLIMA.GenericCallbacks: EveryXWallTimeSeconds, EveryXSimulationSteps
 using CLIMA.PlanetParameters: planet_radius, day
+using CLIMA.UnitAnnotations
 using CLIMA.MoistThermodynamics: air_density, soundspeed_air, internal_energy
 using CLIMA.Atmos: AtmosModel, SphericalOrientation,
                    DryModel, NoPrecipitation, NoRadiation, NoSubsidence, NoFluxBC,
@@ -58,7 +59,7 @@ function main()
   end
 end
 
-function run(mpicomm, polynomialorder, numelem_horz, numelem_vert,
+@uaware function run(mpicomm, polynomialorder, numelem_horz, numelem_vert,
              timeend, outputtime, ArrayType, FT)
 
   setup = AcousticWaveSetup{FT}()
@@ -177,10 +178,10 @@ function run(mpicomm, polynomialorder, numelem_horz, numelem_vert,
 end
 
 Base.@kwdef struct AcousticWaveSetup{FT}
-  domain_height = FT(10e3) * u"m"
-  T_ref = FT(300) * u"K"
+  domain_height = FT(10e3)
+  T_ref = FT(300)
   α = FT(3)
-  γ = FT(100) * upreferred(u"N/m^3")
+  γ = FT(100)
   nv::Int = 1
 end
 
@@ -196,7 +197,7 @@ function (setup::AcousticWaveSetup)(state, aux, coords, t)
   β = min(FT(1), setup.α * acos(cos(φ) * cos(λ)))
   f = (1 + cos(FT(π) * β)) / 2
   g = sin(setup.nv * FT(π) * h / setup.domain_height)
-  Δp = setup.γ * f * g * u"m"
+  Δp = setup.γ * f * g
   p = aux.ref_state.p + Δp
 
   state.ρ = air_density(setup.T_ref, p)

@@ -43,7 +43,7 @@ function numerical_flux_gradient!(::CentralNumericalFluxGradient, bl::BalanceLaw
                                   state⁺::Vars{S}, aux⁺::Vars{A},
                                   t) where {D,T,S,A}
 
-  grad_types = unit_scale(T, inv(space_unit(bl)))
+  grad_types = T / space_unit(bl)
 
   G = n .* (parent(transform⁺) .+ parent(transform⁻))' ./ 2
   diffusive!(bl, diff, Grad{grad_types}(G), state⁻, aux⁻, t)
@@ -130,14 +130,14 @@ function numerical_flux_nondiffusive!(nf::Rusanov,
   λ⁻ = wavespeed(bl, n, state⁻, aux⁻, t)
   λ⁺ = wavespeed(bl, n, state⁺, aux⁺, t)
   λ = max(λ⁻, λ⁺)
-  λΔQ = λ * (parent(state⁻) - parent(state⁺))
+  units = space_unit(bl) / time_unit(bl)
+  λΔQ = (λ / units) * (parent(state⁻) - parent(state⁺))
 
   # TODO: should this operate on ΔQ or λΔQ?
   update_penalty!(nf, bl, n, λ,
     Vars{S}(λΔQ), state⁻, aux⁻, state⁺, aux⁺, t)
 
-  units = space_unit(bl) / time_unit(bl)
-  Fᵀn .+= λΔQ/2 ./ units
+  Fᵀn .+= λΔQ/2
 end
 
 """
