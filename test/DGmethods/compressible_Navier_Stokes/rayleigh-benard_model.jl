@@ -81,7 +81,7 @@ function initialise_rayleigh_benard!(state::Vars, aux::Vars, coord, t)
   state.moisture.ρq_tot = 0.0u"kg/m^3"
 end
 # --------------- Driver definition ------------------ #
-function run(mpicomm, ArrayType
+function run(mpicomm, ArrayType,
              topl, dim, Ne, polynomialorder,
              timeend, FT, dt, model)
   # -------------- Define grid ----------------------------------- #
@@ -137,7 +137,6 @@ function run(mpicomm, ArrayType
       step[1] += 1
       nothing
   end
-  println("About to start solve")
 
   solve!(Q, lsrk; timeend=timeend, callbacks=(cbinfo,cbvtk))
   println("Solved")
@@ -188,7 +187,7 @@ let
                     range(FT(ymin); length=Ne[2]+1, stop=ymax),
                     range(FT(zmin); length=Ne[3]+1, stop=zmax))
       topl = StackedBrickTopology(mpicomm, brickrange, periodicity = (true, true, false), boundary=((0,0),(0,0),(1,2)))
-      engf_eng0 = run(mpicomm,
+      engf_eng0 = run(mpicomm, ArrayType,
                       topl, dim, Ne, polynomialorder,
                       timeend, FT, dt, model)
       @test engf_eng0 ≈ Expected[ii]
