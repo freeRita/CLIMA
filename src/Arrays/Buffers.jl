@@ -137,9 +137,9 @@ function copybuffer!(A::AbstractArray, B::AbstractArray; async=true)
 end
 
 
-@init @require CUDAdrv = "c5f51814-7f29-56b8-a69c-e4d8f6be1fde" begin
-  using CUDAdrv
-  using CuArrays
+@init @require CUDAdrv = "c5f51814-7f29-56b8-a69c-e4d8f6be1fde" @require CuArrays = "3a865a2d-5b23-5a0f-bc46-62713ec82fae" begin
+  using .CUDAdrv
+  using .CuArrays
 
   import CUDAdrv.Mem
 
