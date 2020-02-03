@@ -335,7 +335,7 @@ function turbulence_tensors(m::AnisoMinDiss, state::Vars, diffusive::Vars, aux::
   coeff = (aux.turbulence.Δ * m.C_poincare)^2
   βij = -(α' * α)
 
-  z = 0*(space_unit(m)^2 / time_unit(m))
+  z = FT(0)*(space_unit(m)^2 / time_unit(m))
   ν = max(z, coeff * (dot(βij, S) / (norm2(α) + eps(FT) / time_unit(m)^2)))
   τ = (-2*ν) * S
 
