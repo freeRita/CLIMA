@@ -100,7 +100,7 @@ end
 
 vars_gradient(::ConstantViscosityWithDivergence,FT) = @vars()
 vars_diffusive(::ConstantViscosityWithDivergence, FT) =
-  @vars(S::SHermitianCompact{3,FT,6})
+@vars(S::SHermitianCompact{3,units(FT,:frequency),6})
 
 function diffusive!(::ConstantViscosityWithDivergence, ::Orientation,
     diffusive::Vars, ∇transform::Grad, state::Vars, aux::Vars, t::Real)

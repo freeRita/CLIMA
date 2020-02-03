@@ -92,7 +92,7 @@ macro uaware(ex)
       Ts = Any[]
     end
     params_unitless, params_unitful = split_U(params)
-    planet_params = names(PlanetParameters) #FIXME
+    planet_params = PlanetParameters.symbols
 
     # Careful of the generation order here!
     body_unitless = postwalk(body) do x

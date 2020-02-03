@@ -12,5 +12,5 @@ struct NoSubsidence{FT} <: AbstractSubsidence{FT} end
   D::U(FT,:frequency)
 end
 
-subsidence_velocity(::NoSubsidence{FT}, z::U(FT,:space)) where {FT} = FT(0)*u"m/s" #FIXME
+subsidence_velocity(::NoSubsidence{FT}, z::U(FT,:space)) where {FT} = FT(0) * unit_alias(:velocity)
 subsidence_velocity(subsidence::ConstantSubsidence{FT}, z::U(FT,:space)) where {FT} = subsidence.D*z

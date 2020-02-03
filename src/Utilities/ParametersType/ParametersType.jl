@@ -93,6 +93,8 @@ macro parameter(sym, val, desc, doexport=false)
   end
 end
 
+global symbols = []
+
 # TODO: figure out how to get this to call @parameter with doexport=true
 macro exportparameter(sym, val, desc)
   esym = esc(sym)

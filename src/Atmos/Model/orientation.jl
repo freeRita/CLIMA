@@ -13,7 +13,7 @@ end
 function vars_aux(m::Orientation, T)
   @vars begin
     Φ::units(T,:gravpot) # gravitational potential
-    ∇Φ::SVector{3, units(T, u"J/kg/m")}
+    ∇Φ::SVector{3, units(T,:accel)}
   end
 end
 
@@ -35,8 +35,8 @@ function vars_aux(m::NoOrientation, T)
   @vars()
 end
 atmos_init_aux!(::NoOrientation, ::AtmosModel, aux::Vars, geom::LocalGeometry) = nothing
-gravitational_potential(::NoOrientation, aux::Vars) = -zero(eltype(aux))
-∇gravitational_potential(::NoOrientation, aux::Vars) = SVector{3,eltype(aux)}(0,0,0)
+gravitational_potential(::NoOrientation, aux::Vars) = -zero(eltype(aux)) * unit_alias(:gravpot)
+∇gravitational_potential(::NoOrientation, aux::Vars) = SVector{3,eltype(aux)}(0,0,0) * unit_alias(:accel)
 altitude(orientation::NoOrientation, aux::Vars) = -zero(eltype(aux))
 
 """
