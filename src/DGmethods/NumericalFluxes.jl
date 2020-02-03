@@ -130,14 +130,14 @@ function numerical_flux_nondiffusive!(nf::Rusanov,
   λ⁻ = wavespeed(bl, n, state⁻, aux⁻, t)
   λ⁺ = wavespeed(bl, n, state⁺, aux⁺, t)
   λ = max(λ⁻, λ⁺)
-  λΔQ = (λ / (space_unit(nf) /  time_unit(nf))) * (parent(state⁻) - parent(state⁺))
+  λΔQ = λ * (parent(state⁻) - parent(state⁺))
 
   # TODO: should this operate on ΔQ or λΔQ?
   update_penalty!(nf, bl, n, λ,
     Vars{S}(λΔQ), state⁻, aux⁻, state⁺, aux⁺, t)
 
-  @show eltype.((Fᵀn, λΔQ))
-  Fᵀn .+= λΔQ/2
+  units = space_unit(bl) / time_unit(bl)
+  Fᵀn .+= λΔQ/2 ./ units
 end
 
 """

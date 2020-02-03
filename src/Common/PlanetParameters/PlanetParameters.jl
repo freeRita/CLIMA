@@ -8,6 +8,8 @@ using Unitful
 import Unitful: Quantity
 using ..ParametersType
 
+global symbols = []
+
 # Physical constants
 @exportparameter gas_constant      8.3144598u"J/mol/K"       "Universal gas constant (J/mol/K)"
 @exportparameter light_speed       2.99792458e8u"m/s"        "Speed of light in vacuum (m/s)"

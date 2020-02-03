@@ -104,6 +104,10 @@ macro exportparameter(sym, val, desc)
   quote
     $exportcmd
     const $esym = Parameter{$qsym}()
+    if !@isdefined symbols
+        global symbols = []
+    end
+    push!(symbols, $esym)
     # FIXME: shouldn't really allow constructors to return other types
     Base.Float64(::Parameter{$qsym}) = $(Float64(ustrip(ev)) * upreferred(unit(ev)))
     Base.Float32(::Parameter{$qsym}) = $(Float32(ustrip(ev)) * upreferred(unit(ev)))
