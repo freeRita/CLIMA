@@ -230,24 +230,25 @@ Here x1 = X1(ξ1); x2 = X2(ξ2); x3 = X3(ξ3)
  - `poly_order` polynomial order for the simulation
 """
 function interpolate_brick!(intrp_brck::InterpolationBrick{FT,T,UI8,UI16,FTV,FTVD,TVD,FTA2,UI8AD,UI16VD}, 
-                              v::FTVD, sv::AbstractArray{FT}, st_idx::T) where {FT <:AbstractFloat, 
-       												                             T <:Int, 
-													                           UI8 <:UInt8, 
-                                                                              UI16 <:UInt16, 
-                                                                               FTV <:AbstractVector{FT}, 
-                                                                              FTVD <:AbstractVector{FT}, 
-                                                                               TVD <:AbstractVector{T}, 
-                                                                              FTA2 <:Array{FT,2},
-                                                                             UI8AD <:AbstractArray{UI8,2}, 
-                                                                            UI16VD <:AbstractVector{UI16}}
+                              sv::AbstractArray{FT}, v::AbstractArray{FT}) where {FT <:AbstractFloat, 
+       											                	               T <:Int, 
+													                             UI8 <:UInt8, 
+                                                                                UI16 <:UInt16, 
+                                                                                 FTV <:AbstractVector{FT}, 
+                                                                                FTVD <:AbstractVector{FT}, 
+                                                                                 TVD <:AbstractVector{T}, 
+                                                                                FTA2 <:Array{FT,2},
+                                                                               UI8AD <:AbstractArray{UI8,2}, 
+                                                                              UI16VD <:AbstractVector{UI16}}
     #-------------- ----------------------------------------------------------------------------
     offset = intrp_brck.offset; m1_r = intrp_brck.m1_r; wb = intrp_brck.wb
     ξ1 = intrp_brck.ξ1; ξ2 = intrp_brck.ξ2; ξ3 = intrp_brck.ξ3
     flg = intrp_brck.flg; fac = intrp_brck.fac;
     #------------------------------------------------------------------------------------------
 
-    qm1 = length(m1_r)
-    Nel = length(offset) - 1
+    qm1   = length(m1_r)
+    Nel   = length(offset) - 1
+    nvars = size(sv,2)
 
 	device = typeof(sv) <: Array ? CPU() : CUDA()
 
@@ -255,13 +256,13 @@ function interpolate_brick!(intrp_brck::InterpolationBrick{FT,T,UI8,UI16,FTV,FTV
         #------------------------------------------------------------------------------------------
         Nel = length(offset) - 1
 
-        vout    = FT(0)
-        vout_ii = FT(0)
-        vout_ij = FT(0)
+        vout    = zeros(FT,nvars)
+        vout_ii = zeros(FT,nvars)
+        vout_ij = zeros(FT,nvars)
 
         for el in 1:Nel #-----for each element elno 
             np  = offset[el+1] - offset[el]
-            lag = @view sv[:,st_idx,el]
+#            lag = @view sv[:,st_idx,el]
             off = offset[el]
 
             for i in 1:np # interpolating point-by-point
@@ -270,40 +271,53 @@ function interpolate_brick!(intrp_brck::InterpolationBrick{FT,T,UI8,UI16,FTV,FTV
                 f1 = flg[1,off+i]; f2 = flg[2,off+i]; f3 = flg[3,off+i]
                 fc = fac[off+i]
 
-                vout = 0.0
+                vout .= 0.0
                 f3 == 0 ? (ikloop = 1:qm1) : (ikloop = f3:f3)
 
                 for ik in ikloop
                     #--------------------------------------------
-                    vout_ij = 0.0
+                    vout_ij .= 0.0
                     f2 == 0 ? (ijloop = 1:qm1) : (ijloop = f2:f2)
                     for ij in ijloop #1:qm1 
                         #----------------------------------------------------------------------------
-                        vout_ii = 0.0 
+                        vout_ii .= 0.0 
 
                         if f1 == 0
                             for ii in 1:qm1
-                                @inbounds vout_ii += lag[ii + (ij-1)*qm1 + (ik-1)*qm1*qm1] *  wb[ii] / (ξ1l-m1_r[ii])#phir[ii]
+							    for vari in 1:nvars
+	                                @inbounds vout_ii[vari] += sv[ii + (ij-1)*qm1 + (ik-1)*qm1*qm1, vari, el] *  wb[ii] / (ξ1l-m1_r[ii])#phir[ii]
+                            	end
                             end
                         else
-                            @inbounds vout_ii = lag[f1 + (ij-1)*qm1 + (ik-1)*qm1*qm1]
+							for vari in 1:nvars
+	                            @inbounds vout_ii[vari] = sv[f1 + (ij-1)*qm1 + (ik-1)*qm1*qm1, vari, el]
+							end
                         end
                         if f2==0
-                            @inbounds vout_ij += vout_ii * wb[ij] / (ξ2l-m1_r[ij])#phis[ij]
+                            for vari in 1:nvars
+	                            @inbounds vout_ij[vari] += vout_ii[vari] * wb[ij] / (ξ2l-m1_r[ij])#phis[ij]
+							end
                         else
-                            @inbounds vout_ij = vout_ii
+							for vari in 1:nvars
+	                            @inbounds vout_ij[vari] = vout_ii[vari]
+							end
                         end
                         #----------------------------------------------------------------------------
                     end
                     if f3==0
-                        @inbounds vout += vout_ij * wb[ik] / (ξ3l-m1_r[ik])#phit[ik]
+     					for vari in 1:nvars
+	                        @inbounds vout[vari] += vout_ij[vari] * wb[ik] / (ξ3l-m1_r[ik])#phit[ik]
+						end
                     else
-                        @inbounds vout = vout_ij
+                        for vari in 1:nvars
+	                        @inbounds vout[vari] = vout_ij[vari]
+						end
                     end
                     #--------------------------------------------
                 end
-                @inbounds v[off + i] = vout * fc
-
+                for vari in 1:nvars
+	                @inbounds v[off + i, vari] = vout[vari] * fc
+				end
             end
         end
         #------------------------------------------------------------------------------------------
@@ -311,7 +325,7 @@ function interpolate_brick!(intrp_brck::InterpolationBrick{FT,T,UI8,UI16,FTV,FTV
 #        @cuda threads=(qm1,qm1) blocks=Nel shmem=qm1*(qm1+2)*sizeof(FT) interpolate_brick_CUDA!(intrp_brck.offset, intrp_brck.m1_r, intrp_brck.wb, 
 #                                                                                                intrp_brck.ξ1, intrp_brck.ξ2, intrp_brck.ξ3, 
 #                                                                                                intrp_brck.flg, intrp_brck.fac, intrp_brck.v, sv, st_idx)
-        @cuda threads=(qm1,qm1) blocks=Nel shmem=qm1*(qm1+2)*sizeof(FT) interpolate_brick_CUDA!(offset, m1_r, wb, ξ1, ξ2, ξ3, flg, fac, v, sv, st_idx)
+        @cuda threads=(qm1,qm1) blocks=(Nel,nvars) shmem=qm1*(qm1+2)*sizeof(FT) interpolate_brick_CUDA!(offset, m1_r, wb, ξ1, ξ2, ξ3, flg, fac, sv, v)
     end
 end
 #--------------------------------------------------------
@@ -320,11 +334,12 @@ end
 function interpolate_brick_CUDA!(offset::AbstractArray{T,1},    m1_r::AbstractArray{FT,1},   wb::AbstractArray{FT,1}, 
                                      ξ1::AbstractArray{FT,1},     ξ2::AbstractArray{FT,1},   ξ3::AbstractArray{FT,1}, 
                                     flg::AbstractArray{UInt8,2}, fac::AbstractArray{FT,1},
-                                      v::AbstractArray{FT,1},     sv::AbstractArray{FT}, st_idx::T) where {T <: Int, FT <: AbstractFloat}
+                                     sv::AbstractArray{FT},        v::AbstractArray{FT}) where {T <: Int, FT <: AbstractFloat}
 
-    tj = threadIdx().x; tk = threadIdx().y; # thread ids	
-    el = blockIdx().x                       # assigning one element per block 
-    qm1 = length(m1_r)
+    tj     = threadIdx().x; tk = threadIdx().y; # thread ids	
+    el     = blockIdx().x                       # assigning one element per block 
+    st_idx = blockIdx().y
+    qm1    = length(m1_r)
     #--------creating views for shared memory
     shm_FT = @cuDynamicSharedMem(FT, (qm1,qm1+2)) 
     
@@ -390,7 +405,7 @@ function interpolate_brick_CUDA!(offset::AbstractArray{T,1},    m1_r::AbstractAr
                     @inbounds vout_jk[1,1] = vout_jk[1,f3]
                 end
             end
-            @inbounds v[off + i] = vout_jk[1,1] * fc
+            @inbounds v[off + i, st_idx] = vout_jk[1,1] * fc
         end
 
 
@@ -479,7 +494,6 @@ struct InterpolationCubedSphere{FT <: AbstractFloat,
     longi::UI16VD # long coordinates of interpolation points within each element
 
 
-    v::FTVD      # interpolated variable within each element
     offset::TVD  # offsets for each element for v 
 
     m1_r::FTVD   # GLL points
@@ -678,7 +692,7 @@ struct InterpolationCubedSphere{FT <: AbstractFloat,
 
             m1_r = DA(m1_r); m1_w = DA(m1_w); wb = DA(wb);
         
-            offset_d = DA(offset_d); v = DA(v);
+            offset_d = DA(offset_d);
         end
 
         return new{FT, 
@@ -690,7 +704,7 @@ struct InterpolationCubedSphere{FT <: AbstractFloat,
                    typeof(offset_d),
                    typeof(flg_d),
                    typeof(rad_d)}(Nel, poly_order, lat_min, long_min, rad_min, lat_max, long_max, rad_max, lat_res, long_res, rad_res, 
-                    n_rad, n_lat, n_long, rad_grd, lat_grd, long_grd, ξ1_d, ξ2_d, ξ3_d, flg_d, fac_d, rad_d, lat_d, long_d, v, offset_d, m1_r, m1_w, wb)
+                    n_rad, n_lat, n_long, rad_grd, lat_grd, long_grd, ξ1_d, ξ2_d, ξ3_d, flg_d, fac_d, rad_d, lat_d, long_d, offset_d, m1_r, m1_w, wb)
 
 
 #struct InterpolationCubedSphere{FT <: AbstractFloat, 
@@ -837,27 +851,37 @@ function trilinear_map_IJac_x_vec!(ξ::AbstractArray{FT,1}, x1v::AbstractArray{F
     return nothing 
 end
 #--------------------------------------------------------
-function interpolate_cubed_sphere!(offset::AbstractArray{T,1}, m1_r::AbstractArray{FT,1}, wb::AbstractArray{FT,1}, 
-                                   ξ1::AbstractArray{FT,1}, ξ2::AbstractArray{FT,1}, ξ3::AbstractArray{FT,1}, 
-                                   flg::AbstractArray{UInt8,2}, fac::AbstractArray{FT,1},
-                                   v::AbstractArray{FT,1}, sv::AbstractArray{FT}, st_no::T) where {T <: Integer, FT <: AbstractFloat}
-
-    qm1 = length(m1_r)
-    Nel = length(offset) - 1
+function interpolate_cubed_sphere!(intrp_cs::InterpolationCubedSphere{FT,T,UI8,UI16,FTV,FTVD,TVD,UI8AD,UI16VD},
+                                   sv::AbstractArray{FT}, v::AbstractArray{FT}) where {FT <: AbstractFloat, 
+        											                                    T <: Int, 
+													                                  UI8 <: UInt8,
+													                                 UI16 <: UInt16,
+													                                  FTV <:AbstractVector{FT}, 
+													                                 FTVD <:AbstractVector{FT}, 
+													                                  TVD <:AbstractVector{T},
+													                                UI8AD <:AbstractArray{UI8,2}, 
+												                                   UI16VD <:AbstractVector{UI16}}
+    #-------------- ----------------------------------------------------------------------------
+    offset = intrp_cs.offset; m1_r = intrp_cs.m1_r; wb = intrp_cs.wb;
+    ξ1 = intrp_cs.ξ1; ξ2 = intrp_cs.ξ2; ξ3 = intrp_cs.ξ3
+    flg = intrp_cs.flg; fac = intrp_cs.fac
+    #------------------------------------------------------------------------------------------
+    qm1   = length(m1_r)
+    nvars = size(sv,2)
+    Nel   = length(offset) - 1
 
 	device = typeof(sv) <: Array ? CPU() : CUDA()
 
     if device==CPU()
         #------------------------------------------------------------------------------------------
-        Nel = length(offset) - 1
+        Nel   = length(offset) - 1
 
-        vout    = FT(0)
-        vout_ii = FT(0)
-        vout_ij = FT(0)
+        vout    = zeros(FT,nvars) #FT(0)
+        vout_ii = zeros(FT,nvars) #FT(0)
+        vout_ij = zeros(FT,nvars) #FT(0)
 
         for el in 1:Nel #-----for each element elno 
             np  = offset[el+1] - offset[el]
-            lag = @view sv[:,st_no,el]
             off = offset[el]
 
             for i in 1:np # interpolating point-by-point
@@ -866,46 +890,59 @@ function interpolate_cubed_sphere!(offset::AbstractArray{T,1}, m1_r::AbstractArr
                 f1 = flg[1,off+i]; f2 = flg[2,off+i]; f3 = flg[3,off+i]
                 fc = fac[off+i]
 
-                vout = 0.0
+                vout .= 0.0
                 f3 == 0 ? (ikloop = 1:qm1) : (ikloop = f3:f3)
 
                 for ik in ikloop
                     #--------------------------------------------
-                    vout_ij = 0.0
+                    vout_ij .= 0.0
                     f2 == 0 ? (ijloop = 1:qm1) : (ijloop = f2:f2)
                     for ij in ijloop #1:qm1 
                         #----------------------------------------------------------------------------
-                        vout_ii = 0.0 
+                        vout_ii .= 0.0 
 
                         if f1 == 0
                             for ii in 1:qm1
-                                @inbounds vout_ii += lag[ii + (ij-1)*qm1 + (ik-1)*qm1*qm1] *  wb[ii] / (ξ1l-m1_r[ii])#phir[ii]
+								for vari in 1:nvars
+	                                @inbounds vout_ii[vari] += sv[ii + (ij-1)*qm1 + (ik-1)*qm1*qm1, vari, el] *  wb[ii] / (ξ1l-m1_r[ii])#phir[ii]
+								end
                             end
                         else
-                            @inbounds vout_ii = lag[f1 + (ij-1)*qm1 + (ik-1)*qm1*qm1]
+							for vari in 1:nvars
+	                            @inbounds vout_ii[vari] = sv[f1 + (ij-1)*qm1 + (ik-1)*qm1*qm1, vari, el]
+							end
                         end
                         if f2==0
-                            @inbounds vout_ij += vout_ii * wb[ij] / (ξ2l-m1_r[ij])#phis[ij]
+							for vari in 1:nvars
+                            	@inbounds vout_ij[vari] += vout_ii[vari] * wb[ij] / (ξ2l-m1_r[ij])#phis[ij]
+                            end
                         else
-                            @inbounds vout_ij = vout_ii
+    						for vari in 1:nvars
+	                            @inbounds vout_ij[vari] = vout_ii[vari]
+							end
                         end
                         #----------------------------------------------------------------------------
                     end
                     if f3==0
-                        @inbounds vout += vout_ij * wb[ik] / (ξ3l-m1_r[ik])#phit[ik]
+                    	for vari in 1:nvars
+	                        @inbounds vout[vari] += vout_ij[vari] * wb[ik] / (ξ3l-m1_r[ik])#phit[ik]
+						end
                     else
-                        @inbounds vout = vout_ij
+                        for vari in 1:nvars
+	                        @inbounds vout[vari] = vout_ij[vari]
+						end
                     end
                     #--------------------------------------------
                 end
-                @inbounds v[off + i] = vout * fc
-
+				for vari in 1:nvars
+	                @inbounds v[off + i,vari] = vout[vari] * fc
+                end
             end
         end
         #------------------------------------------------------------------------------------------
     else
         #------------------------------------------------------------------------------------------
-        @cuda threads=(qm1,qm1) blocks=Nel shmem=qm1*(qm1+2)*sizeof(FT) interpolate_cubed_sphere_CUDA!(offset, m1_r, wb, ξ1, ξ2, ξ3, flg, fac, v, sv, st_no)
+        @cuda threads=(qm1,qm1) blocks=(Nel,nvars) shmem=qm1*(qm1+2)*sizeof(FT) interpolate_cubed_sphere_CUDA!(offset, m1_r, wb, ξ1, ξ2, ξ3, flg, fac, sv, v)
         #------------------------------------------------------------------------------------------
     end
     return nothing
@@ -914,13 +951,14 @@ end
 function interpolate_cubed_sphere_CUDA!(offset::AbstractArray{T,1}, m1_r::AbstractArray{FT,1}, wb::AbstractArray{FT,1}, 
                                         ξ1::AbstractArray{FT,1}, ξ2::AbstractArray{FT,1}, ξ3::AbstractArray{FT,1}, 
                                         flg::AbstractArray{UInt8,2}, fac::AbstractArray{FT,1},
-                                        v::AbstractArray{FT,1}, sv::AbstractArray{FT}, st_no::T) where {T <: Integer, FT <: AbstractFloat}
+                                        sv::AbstractArray{FT}, v::AbstractArray{FT}) where {T <: Integer, FT <: AbstractFloat}
 
-    tj = threadIdx().x; tk = threadIdx().y; # thread ids	
-    el = blockIdx().x                       # assigning one element per block 
-
+    tj    = threadIdx().x; tk = threadIdx().y; # thread ids	
+    el    = blockIdx().x                       # assigning one element per block 
+    st_no = blockIdx().y
 
     qm1 = length(m1_r)
+    nvars = size(sv,2)
     #--------creating views for shared memory
     shm_FT = @cuDynamicSharedMem(FT, (qm1,qm1+2)) 
     
@@ -989,7 +1027,7 @@ function interpolate_cubed_sphere_CUDA!(offset::AbstractArray{T,1}, m1_r::Abstra
                     @inbounds vout_jk[1,1] = vout_jk[1,f3]
                 end
             end
-            @inbounds v[off + i] = vout_jk[1,1] * fc
+            @inbounds v[off + i, st_no] = vout_jk[1,1] * fc
         end
 
 

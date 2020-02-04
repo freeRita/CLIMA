@@ -8,6 +8,7 @@ using CLIMA.Mesh.Interpolation
 using StaticArrays
 using GPUifyLoops
 
+using CLIMA.VariableTemplates
 #------------------------------------------------
 using CLIMA.DGmethods
 using CLIMA.DGmethods.NumericalFluxes
@@ -97,31 +98,36 @@ function run_brick_interpolation_test()
     x2 = @view grid.vgeo[:,_y,:]
     x3 = @view grid.vgeo[:,_z,:]
  
-    st_idx = _ρ # state vector
 
-    var = @view Q.data[:,st_idx,:]
 println("typeof(Q.data) = $(typeof(Q.data))")
     #fcn(x,y,z) = x .* y .* z # sample function
     fcn(x,y,z) = sin.(x) .* cos.(y) .* cos.(z) # sample function
 
-    var .= fcn( x1 ./ xmax, x2 ./ ymax, x3 ./ zmax )
+    
+
     #----calling interpolation function on state variable # st_idx--------------------------
+    nvars = size(Q.data,2)
+
+    for vari in 1:nvars
+		Q.data[:,vari,:] = fcn( x1 ./ xmax, x2 ./ ymax, x3 ./ zmax )
+    end
+
     println("timing interpolation setup")
     @time intrp_brck = InterpolationBrick(grid, xres)
-    
-    iv = DA( Array{FT}(undef,intrp_brck.offset[end]) )
+    np_ig = Array(intrp_brck.offset)[end]    
+    iv = DA( Array{FT}(undef,np_ig,nvars) )
  
     println("timing interpolation/ first call")
-    @time interpolate_brick!(intrp_brck, iv, Q.data, st_idx)
+    @time interpolate_brick!(intrp_brck, Q.data, iv)
 
-    println("timing interpolate_brick")
+#    println("timing interpolate_brick")
     for i in 1:10
-        @time interpolate_brick!(intrp_brck, iv, Q.data, st_idx)
+        @time interpolate_brick!(intrp_brck, Q.data, iv)
     end
     #------testing
     Nel = length( grid.topology.realelems )
 
-    error = zeros(FT, Nel) 
+    error = zeros(FT, Nel, nvars) 
     for elno in 1:Nel
         st  = intrp_brck.offset[elno] + 1
         en  = intrp_brck.offset[elno+1]
@@ -129,12 +135,14 @@ println("typeof(Q.data) = $(typeof(Q.data))")
             fex = fcn( intrp_brck.x1g[ Array(intrp_brck.x1i[st:en]) ] ./ xmax, 
                        intrp_brck.x2g[ Array(intrp_brck.x2i[st:en]) ] ./ ymax,
                        intrp_brck.x3g[ Array(intrp_brck.x3i[st:en]) ] ./ zmax)
-            error[elno] = maximum(abs.( Array(iv[st:en])-fex[:]))
-##if error[elno] ≥ 1E-6
-##println("$elno). error = ", error[elno])
-##end
+            for vari in 1:nvars
+	            error[elno,vari] = maximum(abs.( Array(iv[st:en,vari])-fex[:]))
+			end
+###if error[elno] ≥ 1E-6
+###println("$elno). error = ", error[elno])
+###end
 #        else
-#println("$elno). No interpolation points in this element")
+##println("$elno). No interpolation points in this element")
         end
     end
 
@@ -154,9 +162,8 @@ println("typeof(Q.data) = $(typeof(Q.data))")
 #        end
 #        MPI.Barrier(mpicomm)
 #    end
-
-#    return l_infinity_domain < 1.0e-14
-return true
+	toler = 1.0E-9
+    return l_infinity_domain < toler #1.0e-14
     #----------------
 end #function run_brick_interpolation_test
 
@@ -204,12 +211,28 @@ function (setup::TestSphereSetup)(state, aux, coords, t)
   nothing
 end
 #----------------------------------------------------------------------------
+# thermodynamic variables of interest
+function test_vars_thermo(FT)
+  @vars begin
+    q_liq::FT
+    q_ice::FT
+    q_vap::FT
+    T::FT
+    θ_liq_ice::FT
+    θ_dry::FT
+    θ_v::FT
+    e_int::FT
+    h_m::FT
+    h_t::FT
+  end
+end
 #----------------------------------------------------------------------------
 # Cubed sphere, lat/long interpolation test
 #----------------------------------------------------------------------------
 function run_cubed_sphere_interpolation_test()
     CLIMA.init()
 
+    DA = CLIMA.array_type()
     FT = Float64 #Float32 #Float64
     mpicomm = MPI.COMM_WORLD
     root = 0
@@ -241,7 +264,8 @@ function run_cubed_sphere_interpolation_test()
 #    long_res = FT( 10 * π / 180.0) # 5 degree resolution
     lat_res  = FT( 1 * π / 180.0) # 5 degree resolution
     long_res = FT( 1 * π / 180.0) # 5 degree resolution
-    nel_vert_grd  = 100 #100 #50 #10#50
+    #nel_vert_grd  = 100 #100 #50 #10#50
+    nel_vert_grd  = 20 #100 #50 #10#50
     r_res    = FT((vert_range[end] - vert_range[1])/FT(nel_vert_grd)) #1000.00    # 1000 m vertical resolution
 
     #----------------------------------------------------------
@@ -280,52 +304,55 @@ function run_cubed_sphere_interpolation_test()
     ymax = maximum( abs.(x2) )
     zmax = maximum( abs.(x3) )
 
-    st_idx = _ρ # state vector
-
-    var = @view Q.data[:,st_idx,:]
-
-#    fcn(x,y,z) = x .* y .* z # sample function
     fcn(x,y,z) = sin.(x) .* cos.(y) .* cos.(z) # sample function
 
-    var .= fcn( x1 ./ xmax, x2 ./ ymax, x3 ./ zmax )
+    st_idx = _ρ # state vector
+    nvars = size(Q.data,2)
+
+    for i in 1:nvars
+		Q.data[:,i,:] .= fcn( x1 ./ xmax, x2 ./ ymax, x3 ./ zmax )
+    end
   #------------------------------
     qm1 = polynomialorder + 1
 
     @time intrp_cs = InterpolationCubedSphere(grid, collect(vert_range), numelem_horz, lat_res, long_res, r_res)
+    np_ig = Array(intrp_cs.offset)[end]
+#    np_ig = tmp[end]
 #for i in 1:10
 #    interp_cs = []
 
 #    @time intrp_cs = InterpolationCubedSphere(grid, collect(vert_range), numelem_horz, lat_res, long_res, r_res)
 #end
 
-println("After setting up intrp_cs")
-
-@time    interpolate_cubed_sphere!(intrp_cs.offset, intrp_cs.m1_r, intrp_cs.wb, intrp_cs.ξ1, intrp_cs.ξ2, intrp_cs.ξ3, intrp_cs.flg, intrp_cs.fac, intrp_cs.v, Q.data, st_idx)#,Val(qm1))
-#    for i in 1:20
-#        @time interpolate_cubed_sphere!(intrp_cs.offset, intrp_cs.m1_r, intrp_cs.wb, intrp_cs.ξ1, intrp_cs.ξ2, intrp_cs.ξ3, intrp_cs.flg, intrp_cs.fac, intrp_cs.v, Q.data, st_idx)#,Val(qm1))
-#    end
+    iv = DA( Array{FT}(undef,np_ig,nvars) ) # allocating the interpolation variable
+println("After initializing iv")
+    @time interpolate_cubed_sphere!(intrp_cs, Q.data, iv)#,Val(qm1))
+    for i in 1:20
+        @time interpolate_cubed_sphere!(intrp_cs, Q.data, iv)#,Val(qm1))
+    end
     #----------------------------------------------------------
     Nel = length( grid.topology.realelems )
 
-    error = zeros(FT, Nel) 
+    error = zeros(FT, Nel, nvars) 
         
     offset = Array(intrp_cs.offset)
     radc   = intrp_cs.rad_grd[Array(intrp_cs.radi)]
     latc   = intrp_cs.lat_grd[Array(intrp_cs.lati)]
     longc  = intrp_cs.long_grd[Array(intrp_cs.longi)]
-    v      = Array(intrp_cs.v)
+    v      = Array(iv)
 
     for elno in 1:Nel
         st  = offset[elno] + 1
         en  = offset[elno+1]
         if en ≥ st 
-
-            x1_grd = radc[st:en] .* sin.(latc[st:en]) .* cos.(longc[st:en]) # inclination -> latitude; azimuthal -> longitude.
-            x2_grd = radc[st:en] .* sin.(latc[st:en]) .* sin.(longc[st:en]) # inclination -> latitude; azimuthal -> longitude.
-            x3_grd = radc[st:en] .* cos.(latc[st:en])
-        
-            fex = fcn( x1_grd ./ xmax , x2_grd ./ ymax , x3_grd ./ zmax )
-            error[elno] = maximum(abs.(v[st:en] - fex[:]))
+            for vari in 1:nvars
+	            x1_grd = radc[st:en] .* sin.(latc[st:en]) .* cos.(longc[st:en]) # inclination -> latitude; azimuthal -> longitude.
+    	        x2_grd = radc[st:en] .* sin.(latc[st:en]) .* sin.(longc[st:en]) # inclination -> latitude; azimuthal -> longitude.
+        	    x3_grd = radc[st:en] .* cos.(latc[st:en])
+        	
+            	fex = fcn( x1_grd ./ xmax , x2_grd ./ ymax , x3_grd ./ zmax )
+	            error[elno,vari] = maximum(abs.(v[st:en,vari] - fex[:]))
+			end
         end
     end
     #----------------------------------------------------------
@@ -350,14 +377,19 @@ println("After setting up intrp_cs")
         end
     end
 #----------------------------------------------------------------------------
+    a = test_vars_thermo(FT)
+    println("a = ")
+    display(a)
+#----------------------------------------------------------------------------
     return l_infinity_domain < toler # 1.0e-12
 end 
 #----------------------------------------------------------------------------
+
 #@testset "Interpolation tests" begin
 #    @test run_brick_interpolation_test()
 #    @test run_cubed_sphere_interpolation_test()
 #end
-#run_brick_interpolation_test()
-run_cubed_sphere_interpolation_test()
+run_brick_interpolation_test()
+#run_cubed_sphere_interpolation_test()
 #------------------------------------------------
 
