@@ -83,6 +83,7 @@ end
                      Gravity(),
                      NoFluxBC(),
                      setup)
+  @show setup.T_ref, IsothermalProfile(setup.T_ref)
   linearmodel = AtmosAcousticGravityLinearModel(model)
 
   dg = DGModel(model, grid, Rusanov(),

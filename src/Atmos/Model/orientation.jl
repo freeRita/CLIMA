@@ -1,6 +1,7 @@
 # TODO: add Coriolis vectors
 import ..PlanetParameters: grav, planet_radius
 import ..UnitAnnotations: space_unit, gravpot_unit, accel_unit
+using ..UnitAnnotations
 export Orientation, NoOrientation, FlatOrientation, SphericalOrientation
 
 # FIXME
@@ -12,16 +13,16 @@ end
 
 function vars_aux(m::Orientation, T)
   @vars begin
-    Φ::units(T,:gravpot) # gravitational potential
-    ∇Φ::SVector{3, units(T,:accel)}
+    Φ::U(T,:gravpot) # gravitational potential
+    ∇Φ::SVector{3, U(T,:accel)}
   end
 end
 
 gravitational_potential(::Orientation, aux::Vars) = aux.orientation.Φ
 ∇gravitational_potential(::Orientation, aux::Vars) = aux.orientation.∇Φ
-altitude(orientation::Orientation, aux::Vars) =
+@uaware altitude(orientation::Orientation, aux::Vars) =
   (gp = gravitational_potential(orientation, aux); gp / numtype(gp)(grav)) #FIXME
-vertical_unit_vector(orientation::Orientation, aux::Vars) = ∇gravitational_potential(orientation, aux) / grav
+@uaware vertical_unit_vector(orientation::Orientation, aux::Vars) = ∇gravitational_potential(orientation, aux) / grav
 
 
 """
@@ -47,7 +48,7 @@ to the surface of the planet.
 """
 struct SphericalOrientation <: Orientation
 end
-function atmos_init_aux!(::SphericalOrientation, ::AtmosModel, aux::Vars, geom::LocalGeometry)
+@uaware function atmos_init_aux!(::SphericalOrientation, ::AtmosModel, aux::Vars, geom::LocalGeometry)
   normcoord = norm(aux.coord)
   aux.orientation.Φ = grav * (normcoord - planet_radius)
   aux.orientation.∇Φ = grav / normcoord .* aux.coord

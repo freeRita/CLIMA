@@ -44,18 +44,18 @@ time_unit(::AdvectionDiffusion)  = unit_alias(:time)
 #   `coord` coordinate points (needed for BCs)
 #   `u` advection velocity
 #   `D` Diffusion tensor
-vars_aux(::AdvectionDiffusion, FT) = @vars(coord::SVector{3, units(FT,:space)},
-                                           u::SVector{3, units(FT,:velocity)},
-                                           D::SMatrix{3, 3, units(FT,:kinvisc), 9})
+@uaware vars_aux(::AdvectionDiffusion, FT) = @vars(coord::SVector{3, U(FT,:space)},
+                                             u::SVector{3, U(FT,:velocity)},
+                                             D::SMatrix{3, 3, U(FT,:kinvisc), 9})
 #
 # Density is only state
-vars_state(::AdvectionDiffusion, FT) = @vars(ρ::units(FT,:density))
+@uaware vars_state(::AdvectionDiffusion, FT) = @vars(ρ::U(FT,:density))
 
 # Take the gradient of density
-vars_gradient(::AdvectionDiffusion, FT) = @vars(ρ::units(FT,:density))
+@uaware vars_gradient(::AdvectionDiffusion, FT) = @vars(ρ::U(FT,:density))
 
 # The DG auxiliary variable: D ∇ρ
-vars_diffusive(::AdvectionDiffusion, FT) = @vars(σ::SVector{3, units(FT,:massflux)})
+@uaware vars_diffusive(::AdvectionDiffusion, FT) = @vars(σ::SVector{3, U(FT,:massflux)})
 
 struct Pseudo1D{n, α, β, μ, δ} <: AdvectionDiffusionProblem end
 

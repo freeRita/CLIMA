@@ -69,30 +69,39 @@ macro uaware(ex)
 
     # Lastly provide the constructors
     constr_unitless = quote
-      function (::typeof($name{$(p1...)}))($(params_unitless...)) where {$(p1...)}
+        function (::Type{$name{$(p1...)}})($(params_unitless...)) where {$(p1...)}
         $lname{$(p1...)}($(attrs_unitless...))
       end
     end
     constr_unitful = quote
-      function (::typeof($name{$(p1...)}))($(params_unitful... )) where {$(p1...)}
+        function (::Type{$name{$(p1...)}})($(params_unitful... )) where {$(p1...)}
         $uname{$(p1...)}($(attrs_unitful...))
       end
     end
 
-    return quote
+    #= return quote =#
+    #=                 $unitless =#
+    #=   Base.@__doc__ $unitful =#
+    #=                 $union =#
+    #=                 $constr_unitless =#
+    #=                 $constr_unitful =#
+    #= end |> esc =#
+    q =  quote
                     $unitless
       Base.@__doc__ $unitful
                     $union
                     $constr_unitless
                     $constr_unitful
-    end |> esc
+    end
+    #= @show prettify(q) =#
+    return esc(q)
 
   elseif @capture(shortdef(ex), (f_(params__) = body_) | (f_(params__) where {Ts__} = body_))
     if !@isdefined(Ts) || Ts === nothing
       Ts = Any[]
     end
     params_unitless, params_unitful = split_U(params)
-    planet_params = PlanetParameters.symbols
+    planet_params = names(PlanetParameters) #FIXME
 
     # Careful of the generation order here!
     body_unitless = postwalk(body) do x
@@ -103,10 +112,16 @@ macro uaware(ex)
     def_unitless = :($f($(params_unitless...)) where {$(Ts...)} = $body_unitless)
     def_unitful  = :($f($(params_unitful... )) where {$(Ts...)} = $body)
 
-    return quote
-                    $def_unitless
+    #= return quote =#
+    #=   Base.@__doc__ $def_unitful =#
+    #=                 $def_unitless =#
+    #= end |> esc =#
+    q = quote
       Base.@__doc__ $def_unitful
-    end |> esc
+                    $def_unitless # unitless goes next - overriding where no input parameters changed
+    end
+    #= @show prettify(q) =#
+    return esc(q)
   end
 
   error("Expected a structure or function definition for annotation.")

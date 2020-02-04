@@ -39,16 +39,16 @@ struct HydrostaticState{P,F} <: ReferenceState
   relativehumidity::F
 end
 
-vars_aux(m::HydrostaticState, FT) = @vars begin
-  ρ::units(FT,:density)
-  p::units(FT,:pressure)
-  T::units(FT,:temperature)
-  ρe::units(FT,:energypv)
-  ρq_tot::units(FT,:density)
+@uaware vars_aux(m::HydrostaticState, FT) = @vars begin
+  ρ::U(FT,:density)
+  p::U(FT,:pressure)
+  T::U(FT,:temperature)
+  ρe::U(FT,:energypv)
+  ρq_tot::U(FT,:density)
 end
 
 
-function atmos_init_aux!(m::HydrostaticState{P,F}, atmos::AtmosModel, aux::Vars, geom::LocalGeometry) where {P,F}
+@uaware function atmos_init_aux!(m::HydrostaticState{P,F}, atmos::AtmosModel, aux::Vars, geom::LocalGeometry) where {P,F}
   FT = eltype(aux)
   T,p = m.temperatureprofile(atmos.orientation, aux)
   aux.ref_state.T = T
@@ -90,13 +90,14 @@ A uniform temperature profile.
 
 $(DocStringExtensions.FIELDS)
 """
-struct IsothermalProfile{F} <: TemperatureProfile
+@uaware struct IsothermalProfile{F} <: TemperatureProfile
   "temperature (K)"
   T::U(F,:temperature)
 end
 
-function (profile::IsothermalProfile)(orientation::Orientation, aux::Vars)
+@uaware function (profile::IsothermalProfile)(orientation::Orientation, aux::Vars)
   FT = eltype(aux)
+  @show gravitational_potential(orientation, aux), FT(R_d), profile.T
   p = FT(MSLP) * exp(-gravitational_potential(orientation, aux)/(FT(R_d)*profile.T))
   return (profile.T, p)
 end
@@ -114,7 +115,7 @@ T(z) = \\max(T_{\\text{surface}} − Γ z, T_{\\text{min}})
 
 $(DocStringExtensions.FIELDS)
 """
-struct LinearTemperatureProfile{F} <: TemperatureProfile
+@uaware struct LinearTemperatureProfile{F} <: TemperatureProfile
   "minimum temperature (K)"
   T_min::U(F,:temperature)
   "surface temperature (K)"
@@ -123,7 +124,7 @@ struct LinearTemperatureProfile{F} <: TemperatureProfile
   Γ::U(F,:lincond)
 end
 
-function (profile::LinearTemperatureProfile)(orientation::Orientation, aux::Vars)
+@uaware function (profile::LinearTemperatureProfile)(orientation::Orientation, aux::Vars)
   z = altitude(orientation, aux)
   T = max(profile.T_surface - profile.Γ*z, profile.T_min)
 

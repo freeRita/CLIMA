@@ -78,11 +78,10 @@ Compute
 |S| = \\sqrt{2\\sum_{i,j} S_{ij}^2}
 ```
 """
-function strain_rate_magnitude(S::SHermitianCompact{3,FT,6}) where {FT}
+function strain_rate_magnitude(S::SHermitianCompact{3,units(FT,:frequency),6}) where {FT}
   return sqrt(2*norm2(S))
 end
 
-DVQ{FT} = Quantity{FT, dimension(u"kg/m/s"), typeof(u"kg/m/s")}
 """
     ConstantViscosityWithDivergence <: TurbulenceClosure
 
@@ -93,14 +92,18 @@ Divergence terms are included in the momentum flux tensor.
 
 $(DocStringExtensions.FIELDS)
 """
-struct ConstantViscosityWithDivergence{FT} <: TurbulenceClosure
+@uaware struct ConstantViscosityWithDivergence{FT} <: TurbulenceClosure
   "Dynamic Viscosity [kg/m/s]"
-  ρν::DVQ{FT}
+  ρν::U(FT,:dynvisc)
+end
+
+function ConstantViscosityWithDivergence(ρν::U(FT,:dynvisc)) where {FT}
+  @show ConstantViscosityWithDivergence{FT}(ρν)
 end
 
 vars_gradient(::ConstantViscosityWithDivergence,FT) = @vars()
-vars_diffusive(::ConstantViscosityWithDivergence, FT) =
-@vars(S::SHermitianCompact{3,units(FT,:frequency),6})
+@uaware vars_diffusive(::ConstantViscosityWithDivergence, FT) =
+  @vars(S::SHermitianCompact{3,U(FT,:frequency),6})
 
 function diffusive!(::ConstantViscosityWithDivergence, ::Orientation,
     diffusive::Vars, ∇transform::Grad, state::Vars, aux::Vars, t::Real)
@@ -165,9 +168,9 @@ struct SmagorinskyLilly{FT} <: TurbulenceClosure
   C_smag::FT
 end
 
-vars_aux(::SmagorinskyLilly,FT) = @vars(Δ::FT)
-vars_gradient(::SmagorinskyLilly,FT) = @vars(θ_v::units(FT,:temperature))
-vars_diffusive(::SmagorinskyLilly,FT) = @vars(S::SHermitianCompact{3,units(FT,frequency),6}, N²::units(u"s^-2"))
+vars_aux(::SmagorinskyLilly,FT) = @vars(Δ::FT) #FIXME should probably have spacial units
+@uaware vars_gradient(::SmagorinskyLilly,FT) = @vars(θ_v::U(FT,:temperature))
+@uaware vars_diffusive(::SmagorinskyLilly,FT) = @vars(S::SHermitianCompact{3,U(FT,:frequency),6}, N²::U(u"s^-2"))
 
 
 function atmos_init_aux!(::SmagorinskyLilly, ::AtmosModel, aux::Vars, geom::LocalGeometry)
@@ -234,9 +237,9 @@ struct Vreman{FT} <: TurbulenceClosure
   "Smagorinsky Coefficient [dimensionless]"
   C_smag::FT
 end
-vars_aux(::Vreman,FT) = @vars(Δ::units(FT,:space))
-vars_gradient(::Vreman,FT) = @vars(θ_v::units(FT,:temperature))
-vars_diffusive(::Vreman,FT) = @vars(∇u::SMatrix{3,3,units(FT,:frequency),9}, N²::units(FT,u"s^-2"))
+@uaware vars_aux(::Vreman,FT) = @vars(Δ::U(FT,:space))
+@uaware vars_gradient(::Vreman,FT) = @vars(θ_v::U(FT,:temperature))
+@uaware vars_diffusive(::Vreman,FT) = @vars(∇u::SMatrix{3,3,U(FT,:frequency),9}, N²::U(FT,u"s^-2"))
 space_unit(::Vreman) = u"m"
 time_unit(::Vreman) = u"s"
 
@@ -314,9 +317,9 @@ url = {https://link.aps.org/doi/10.1103/PhysRevFluids.1.041701}
 struct AnisoMinDiss{FT} <: TurbulenceClosure
   C_poincare::FT
 end
-vars_aux(::AnisoMinDiss,FT) = @vars(Δ::units(FT,:space))
+@uaware vars_aux(::AnisoMinDiss,FT) = @vars(Δ::U(FT,:space))
 vars_gradient(::AnisoMinDiss,FT) = @vars()
-vars_diffusive(::AnisoMinDiss,FT) = @vars(∇u::SMatrix{3,3,units(FT,:frequency),9})
+@uaware vars_diffusive(::AnisoMinDiss,FT) = @vars(∇u::SMatrix{3,3,U(FT,:frequency),9})
 
 function atmos_init_aux!(::AnisoMinDiss, ::AtmosModel, aux::Vars, geom::LocalGeometry)
   aux.turbulence.Δ = lengthscale(geom)

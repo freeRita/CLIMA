@@ -14,6 +14,7 @@ The number of elements specified by the template type `S`.
 varsize(::Type{T}) where {T<:Real} = 1
 varsize(::Type{Tuple{}}) = 0
 varsize(::Type{NamedTuple{(),Tuple{}}}) = 0
+varsize(::Type{Union{T, Quantity{T, D, U}}}) where {T<:Real,D,U} = 1
 varsize(::Type{SVector{N,T}}) where {N,T<:Real} = N
 
 include("var_names.jl")

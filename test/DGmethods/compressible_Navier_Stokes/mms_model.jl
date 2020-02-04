@@ -18,30 +18,30 @@ end
 space_unit(m::MMSModel) = u"m"
 time_unit(m::MMSModel) = u"s"
 
-vars_aux(::MMSModel,T) = @vars begin
-  x1::units(T,:space)
-  x2::units(T,:space)
-  x3::units(T,:space)
+@uaware vars_aux(::MMSModel,T) = @vars begin
+  x1::U(T,:space)
+  x2::U(T,:space)
+  x3::U(T,:space)
 end
-vars_state(::MMSModel, T) = @vars begin
-  ρ::units(T,:density)
-  ρu::units(T,:massflux)
-  ρv::units(T,:massflux)
-  ρw::units(T,:massflux)
-  ρe::units(T,:energypv)
+@uaware vars_state(::MMSModel, T) = @vars begin
+  ρ::U(T,:density)
+  ρu::U(T,:massflux)
+  ρv::U(T,:massflux)
+  ρw::U(T,:massflux)
+  ρe::U(T,:energypv)
 end
-vars_gradient(::MMSModel, T) = @vars begin
-  u::units(T,:velocity)
-  v::units(T,:velocity)
-  w::units(T,:velocity)
+@uaware vars_gradient(::MMSModel, T) = @vars begin
+  u::U(T,:velocity)
+  v::U(T,:velocity)
+  w::U(T,:velocity)
 end
-vars_diffusive(::MMSModel, T) = @vars begin
-  τ11::units(T,:energypv)
-  τ22::units(T,:energypv)
-  τ33::units(T,:energypv)
-  τ12::units(T,:energypv)
-  τ13::units(T,:energypv)
-  τ23::units(T,:energypv)
+@uaware vars_diffusive(::MMSModel, T) = @vars begin
+  τ11::U(T,:energypv)
+  τ22::U(T,:energypv)
+  τ33::U(T,:energypv)
+  τ12::U(T,:energypv)
+  τ13::U(T,:energypv)
+  τ23::U(T,:energypv)
 end
 
 function flux_nondiffusive!(::MMSModel, flux::Grad, state::Vars,
