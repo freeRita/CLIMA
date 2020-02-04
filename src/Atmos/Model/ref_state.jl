@@ -39,7 +39,7 @@ struct HydrostaticState{P,F} <: ReferenceState
   relativehumidity::F
 end
 
-@uaware vars_aux(m::HydrostaticState, FT) = @vars begin
+vars_aux(m::HydrostaticState, FT) = @vars begin
   ρ::U(FT,:density)
   p::U(FT,:pressure)
   T::U(FT,:temperature)

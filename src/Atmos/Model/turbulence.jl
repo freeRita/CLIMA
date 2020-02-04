@@ -102,7 +102,7 @@ function ConstantViscosityWithDivergence(ρν::U(FT,:dynvisc)) where {FT}
 end
 
 vars_gradient(::ConstantViscosityWithDivergence,FT) = @vars()
-@uaware vars_diffusive(::ConstantViscosityWithDivergence, FT) =
+vars_diffusive(::ConstantViscosityWithDivergence, FT) =
   @vars(S::SHermitianCompact{3,U(FT,:frequency),6})
 
 function diffusive!(::ConstantViscosityWithDivergence, ::Orientation,
@@ -169,8 +169,8 @@ struct SmagorinskyLilly{FT} <: TurbulenceClosure
 end
 
 vars_aux(::SmagorinskyLilly,FT) = @vars(Δ::FT) #FIXME should probably have spacial units
-@uaware vars_gradient(::SmagorinskyLilly,FT) = @vars(θ_v::U(FT,:temperature))
-@uaware vars_diffusive(::SmagorinskyLilly,FT) = @vars(S::SHermitianCompact{3,U(FT,:frequency),6}, N²::U(u"s^-2"))
+vars_gradient(::SmagorinskyLilly,FT) = @vars(θ_v::U(FT,:temperature))
+vars_diffusive(::SmagorinskyLilly,FT) = @vars(S::SHermitianCompact{3,U(FT,:frequency),6}, N²::U(u"s^-2"))
 
 
 function atmos_init_aux!(::SmagorinskyLilly, ::AtmosModel, aux::Vars, geom::LocalGeometry)
@@ -237,9 +237,9 @@ struct Vreman{FT} <: TurbulenceClosure
   "Smagorinsky Coefficient [dimensionless]"
   C_smag::FT
 end
-@uaware vars_aux(::Vreman,FT) = @vars(Δ::U(FT,:space))
-@uaware vars_gradient(::Vreman,FT) = @vars(θ_v::U(FT,:temperature))
-@uaware vars_diffusive(::Vreman,FT) = @vars(∇u::SMatrix{3,3,U(FT,:frequency),9}, N²::U(FT,u"s^-2"))
+vars_aux(::Vreman,FT) = @vars(Δ::U(FT,:space))
+vars_gradient(::Vreman,FT) = @vars(θ_v::U(FT,:temperature))
+vars_diffusive(::Vreman,FT) = @vars(∇u::SMatrix{3,3,U(FT,:frequency),9}, N²::U(FT,u"s^-2"))
 space_unit(::Vreman) = u"m"
 time_unit(::Vreman) = u"s"
 
@@ -317,9 +317,9 @@ url = {https://link.aps.org/doi/10.1103/PhysRevFluids.1.041701}
 struct AnisoMinDiss{FT} <: TurbulenceClosure
   C_poincare::FT
 end
-@uaware vars_aux(::AnisoMinDiss,FT) = @vars(Δ::U(FT,:space))
+vars_aux(::AnisoMinDiss,FT) = @vars(Δ::U(FT,:space))
 vars_gradient(::AnisoMinDiss,FT) = @vars()
-@uaware vars_diffusive(::AnisoMinDiss,FT) = @vars(∇u::SMatrix{3,3,U(FT,:frequency),9})
+vars_diffusive(::AnisoMinDiss,FT) = @vars(∇u::SMatrix{3,3,U(FT,:frequency),9})
 
 function atmos_init_aux!(::AnisoMinDiss, ::AtmosModel, aux::Vars, geom::LocalGeometry)
   aux.turbulence.Δ = lengthscale(geom)

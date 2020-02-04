@@ -48,7 +48,7 @@ to the surface of the planet.
 """
 struct SphericalOrientation <: Orientation
 end
-@uaware function atmos_init_aux!(::SphericalOrientation, ::AtmosModel, aux::Vars, geom::LocalGeometry)
+function atmos_init_aux!(::SphericalOrientation, ::AtmosModel, aux::Vars, geom::LocalGeometry)
   normcoord = norm(aux.coord)
   aux.orientation.Φ = grav * (normcoord - planet_radius)
   aux.orientation.∇Φ = grav / normcoord .* aux.coord

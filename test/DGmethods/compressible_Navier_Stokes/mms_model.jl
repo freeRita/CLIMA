@@ -18,24 +18,24 @@ end
 space_unit(m::MMSModel) = u"m"
 time_unit(m::MMSModel) = u"s"
 
-@uaware vars_aux(::MMSModel,T) = @vars begin
+vars_aux(::MMSModel,T) = @vars begin
   x1::U(T,:space)
   x2::U(T,:space)
   x3::U(T,:space)
 end
-@uaware vars_state(::MMSModel, T) = @vars begin
+vars_state(::MMSModel, T) = @vars begin
   ρ::U(T,:density)
   ρu::U(T,:massflux)
   ρv::U(T,:massflux)
   ρw::U(T,:massflux)
   ρe::U(T,:energypv)
 end
-@uaware vars_gradient(::MMSModel, T) = @vars begin
+vars_gradient(::MMSModel, T) = @vars begin
   u::U(T,:velocity)
   v::U(T,:velocity)
   w::U(T,:velocity)
 end
-@uaware vars_diffusive(::MMSModel, T) = @vars begin
+vars_diffusive(::MMSModel, T) = @vars begin
   τ11::U(T,:energypv)
   τ22::U(T,:energypv)
   τ33::U(T,:energypv)

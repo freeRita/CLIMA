@@ -53,7 +53,7 @@ struct AtmosModel{O,RS,T,M,P,R,SU,S,BC,IS} <: BalanceLaw
   init_state::IS
 end
 
-@uaware function vars_state(m::AtmosModel, FT)
+function vars_state(m::AtmosModel, FT)
   @vars begin
     ρ::U(FT,:density)
     ρu::SVector{3, U(FT,:massflux)}
@@ -63,7 +63,7 @@ end
     radiation::vars_state(m.radiation, FT)
   end
 end
-@uaware function vars_gradient(m::AtmosModel, FT)
+function vars_gradient(m::AtmosModel, FT)
   @vars begin
     u::SVector{3, U(FT,:velocity)}
     h_tot::U(FT,:gravpot)
@@ -71,7 +71,7 @@ end
     moisture::vars_gradient(m.moisture,FT)
   end
 end
-@uaware function vars_diffusive(m::AtmosModel, FT)
+function vars_diffusive(m::AtmosModel, FT)
   @vars begin
     ∇h_tot::SVector{3, U(FT,:accel)}
     turbulence::vars_diffusive(m.turbulence,FT)
@@ -80,7 +80,7 @@ end
 end
 
 
-@uaware function vars_aux(m::AtmosModel, FT)
+function vars_aux(m::AtmosModel, FT)
   @vars begin
     ∫dz::vars_integrals(m, FT)
     ∫dnz::vars_integrals(m, FT)
